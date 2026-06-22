@@ -4,8 +4,14 @@
 
 A lightweight, zero-config security scanner for [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers — the things Claude Desktop, Claude Code, Cursor, and friends connect to when you give an AI agent tools.
 
+[![CI](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml/badge.svg)](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml)
+[![CI](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml/badge.svg)](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml)
+[![CI](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml/badge.svg)](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/fabrica-star.svg)](https://www.npmjs.com/package/fabrica-star)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](package.json)
+
+**[Try the web playground →](https://fadedcantcode.github.io/Fabrica-STAR)**
 
 ---
 
@@ -100,6 +106,18 @@ The non-zero exit code on findings means you can drop it straight into CI:
 ```yaml
 - run: npx fabrica-star scan-config .mcp.json --fail-on high
 ```
+
+Or use the official GitHub Action:
+
+```yaml
+- name: Scan MCP servers
+  uses: FadedCantCode/Fabrica-STAR@v0.1.0
+  with:
+    config-path: .mcp.json
+    fail-on: high
+```
+
+The action annotates findings directly on your PR as code scanning alerts.
 
 ## Severity levels
 

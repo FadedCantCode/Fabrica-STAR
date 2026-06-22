@@ -1,0 +1,91 @@
+name: "Fabrica-STAR MCP Security Scan"
+description: "Scan MCP server configs for security issues — hardcoded secrets, insecure transport, unpinned versions, and known-malicious servers."
+author: "FadedCantCode"
+
+branding:
+  icon: "shield"
+  color: "purple"
+
+inputs:
+  config-path:
+    description: "Path to an MCP client config file to scan. If omitted, auto-discovers Claude Desktop, Claude Code, and Cursor configs."
+    required: false
+    default: ""
+  fail-on:
+    description: "Minimum severity that causes the action to fail (info, low, medium, high, critical)."
+    required: false
+    default: "high"
+  offline:
+    description: "Skip remote known-bad list fetch and npm registry checks (faster, no network calls)."
+    required: false
+    default: "false"
+
+outputs:
+  findings-count:
+    description: "Total number of findings across all scanned servers."
+    value: ${{ steps.scan.outputs.findings-count }}
+  highest-severity:
+    description: "Highest severity level found (info, low, medium, high, critical, or clean)."
+    value: ${{ steps.scan.outputs.highest-severity }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+
+    - name: Install fabrica-star
+      shell: bash
+      run: npm install -g fabrica-star
+
+    - name: Run scan
+      id: scan
+      shell: bash
+      run: |
+        OFFLINE_FLAG=""
+        if [ "${{ inputs.offline }}" = "true" ]; then
+          OFFLINE_FLAG="--offline"
+        fi
+
+        if [ -n "${{ inputs.config-path }}" ]; then
+          fabrica-star scan-config "${{ inputs.config-path }}" \
+            --fail-on "${{ inputs.fail-on }}" \
+            --json $OFFLINE_FLAG > /tmp/fabrica-star-results.json || SCAN_EXIT=$?
+        else
+          fabrica-star scan \
+            --fail-on "${{ inputs.fail-on }}" \
+            --json $OFFLINE_FLAG > /tmp/fabrica-star-results.json || SCAN_EXIT=$?
+        fi
+
+        COUNT=$(node -e "
+          const r = JSON.parse(require('fs').readFileSync('/tmp/fabrica-star-results.json'));
+          console.log(r.servers.reduce((n, s) => n + s.findings.length, 0) + r.generalFindings.length);
+        " 2>/dev/null || echo "0")
+
+        HIGHEST=$(node -e "
+          const r = JSON.parse(require('fs').readFileSync('/tmp/fabrica-star-results.json'));
+          const rank = {info:0,low:1,medium:2,high:3,critical:4};
+          const all = r.servers.flatMap(s => s.findings).concat(r.generalFindings);
+          if (!all.length) { console.log('clean'); process.exit(0); }
+          console.log(all.reduce((w,f) => rank[f.severity]>rank[w]?f.severity:w, 'info'));
+        " 2>/dev/null || echo "unknown")
+
+        echo "findings-count=$COUNT" >> $GITHUB_OUTPUT
+        echo "highest-severity=$HIGHEST" >> $GITHUB_OUTPUT
+
+        cat /tmp/fabrica-star-results.json | node -e "
+          const r = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+          r.servers.forEach(s => {
+            if (!s.findings.length) return;
+            console.log('\\n::group::' + s.server + ' [' + s.riskLevel.toUpperCase() + ']');
+            s.findings.forEach(f => {
+              const level = ['high','critical'].includes(f.severity) ? 'error' : 'warning';
+              console.log('::' + level + '::' + '[' + f.ruleId + '] ' + f.message);
+            });
+            console.log('::endgroup::');
+          });
+        " 2>/dev/null || true
+
+        exit ${SCAN_EXIT:-0}

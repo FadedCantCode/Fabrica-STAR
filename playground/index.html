@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabrica-STAR — MCP Security Scanner Playground</title>
+<meta name="description" content="Paste your MCP server config and instantly scan for security issues. No install, no account, no telemetry.">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --bg2: #141416;
+    --bg3: #1a1a1e;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8e8ea;
+    --text2: #888890;
+    --text3: #555560;
+    --purple: #7c6ff7;
+    --purple-dim: rgba(124,111,247,0.15);
+    --red: #e05252;
+    --red-dim: rgba(224,82,82,0.12);
+    --amber: #e0a040;
+    --amber-dim: rgba(224,160,64,0.12);
+    --green: #4caf7a;
+    --green-dim: rgba(76,175,122,0.12);
+    --cyan: #4ab8c8;
+    --cyan-dim: rgba(74,184,200,0.12);
+    --radius: 8px;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100dvh; }
+
+  /* NAV */
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .logo-icon { width: 28px; height: 28px; background: var(--purple-dim); border: 1px solid var(--purple); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+  .nav-links a { color: var(--text2); font-size: 13px; text-decoration: none; transition: color .15s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-badge { font-size: 11px; padding: 3px 8px; border-radius: 99px; background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(124,111,247,0.3); }
+
+  /* HERO */
+  .hero { text-align: center; padding: 4rem 2rem 2rem; max-width: 640px; margin: 0 auto; }
+  .hero h1 { font-size: clamp(24px, 4vw, 36px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: .75rem; }
+  .hero h1 span { color: var(--purple); }
+  .hero p { font-size: 15px; color: var(--text2); line-height: 1.65; margin-bottom: 1.5rem; }
+  .pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .pill { font-size: 11px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--border2); color: var(--text2); }
+
+  /* MAIN LAYOUT */
+  .app { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 1200px; margin: 2rem auto; padding: 0 2rem 4rem; }
+  @media (max-width: 768px) { .app { grid-template-columns: 1fr; } }
+
+  /* PANELS */
+  .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; padding: .65rem 1rem; border-bottom: 1px solid var(--border); }
+  .panel-title { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); }
+  .panel-actions { display: flex; gap: 6px; }
+  .btn { font-size: 12px; padding: 4px 10px; border-radius: 5px; border: 1px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; transition: all .15s; font-family: var(--sans); }
+  .btn:hover { background: var(--bg3); color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .btn-primary { background: var(--purple); color: #fff; border-color: var(--purple); font-weight: 500; }
+  .btn-primary:hover { opacity: .85; }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* EDITOR */
+  .editor-wrap { flex: 1; position: relative; }
+  textarea { width: 100%; height: 360px; background: transparent; border: none; outline: none; resize: none; padding: 1rem; font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text); }
+  textarea::placeholder { color: var(--text3); }
+
+  /* RESULTS */
+  .results { flex: 1; min-height: 360px; padding: 1rem; overflow-y: auto; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: .75rem; color: var(--text3); font-size: 13px; padding: 2rem; text-align: center; }
+  .empty-icon { font-size: 32px; opacity: .3; }
+  .scanning { display: flex; align-items: center; gap: .5rem; color: var(--text2); font-size: 13px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--purple); animation: pulse 1.2s ease-in-out infinite; }
+  .dot:nth-child(2) { animation-delay: .2s; }
+  .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes pulse { 0%,100% { opacity:.2 } 50% { opacity:1 } }
+
+  /* SUMMARY BAR */
+  .summary { display: flex; gap: 12px; padding: .75rem 1rem; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .stat { font-size: 12px; }
+  .stat-val { font-weight: 600; }
+  .c-clean { color: var(--green); }
+  .c-medium { color: var(--amber); }
+  .c-high { color: var(--red); }
+  .c-critical { color: var(--purple); }
+  .c-low { color: var(--cyan); }
+
+  /* SERVER CARDS */
+  .server { margin-bottom: .75rem; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .server-head { display: flex; align-items: center; gap: 8px; padding: .6rem .85rem; cursor: pointer; transition: background .1s; }
+  .server-head:hover { background: var(--bg3); }
+  .sev-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; letter-spacing: .04em; }
+  .sev-clean { background: var(--green-dim); color: var(--green); }
+  .sev-low { background: var(--cyan-dim); color: var(--cyan); }
+  .sev-medium { background: var(--amber-dim); color: var(--amber); }
+  .sev-high { background: var(--red-dim); color: var(--red); }
+  .sev-critical { background: var(--purple-dim); color: var(--purple); }
+  .server-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .chevron { color: var(--text3); font-size: 12px; transition: transform .2s; }
+  .chevron.open { transform: rotate(180deg); }
+  .findings { display: none; border-top: 1px solid var(--border); }
+  .findings.open { display: block; }
+  .finding { padding: .6rem .85rem; border-bottom: 1px solid var(--border); }
+  .finding:last-child { border-bottom: none; }
+  .finding-rule { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 3px; }
+  .finding-msg { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .clean-msg { padding: .75rem .85rem; font-size: 12px; color: var(--green); }
+
+  /* OPTIONS */
+  .options { display: flex; align-items: center; gap: 1rem; padding: .65rem 1rem; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .opt-label { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .opt-label input[type=checkbox] { accent-color: var(--purple); }
+
+  /* FOOTER */
+  footer { text-align: center; padding: 2rem; font-size: 12px; color: var(--text3); border-top: 1px solid var(--border); }
+  footer a { color: var(--text2); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <div class="logo-icon">⭐</div>
+    Fabrica-STAR
+  </div>
+  <div class="nav-links">
+    <a href="https://github.com/FadedCantCode/Fabrica-STAR">GitHub</a>
+    <a href="https://github.com/FadedCantCode/Fabrica-STAR#readme">Docs</a>
+    <span class="nav-badge">v0.1.0</span>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>Know what you're installing<br>before you <span>npx</span> it.</h1>
+  <p>Paste your MCP server config. Get an instant security report. No install, no account, no telemetry — everything runs in your browser.</p>
+  <div class="pills">
+    <span class="pill">hardcoded secrets</span>
+    <span class="pill">insecure transport</span>
+    <span class="pill">unpinned versions</span>
+    <span class="pill">typosquatting</span>
+    <span class="pill">known malicious servers</span>
+  </div>
+</div>
+
+<div class="app">
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">your mcp config</span>
+      <div class="panel-actions">
+        <button class="btn" onclick="loadExample()">load example</button>
+        <button class="btn" onclick="clearInput()">clear</button>
+      </div>
+    </div>
+    <div class="editor-wrap">
+      <textarea id="config-input" placeholder='Paste the contents of your claude_desktop_config.json, .mcp.json, or any MCP client config here...
+
+Example location:
+  macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
+  Windows: %APPDATA%\Claude\claude_desktop_config.json
+  Claude Code: .mcp.json in your project root'
+        oninput="onInputChange()"></textarea>
+    </div>
+    <div class="options">
+      <label class="opt-label">
+        <input type="checkbox" id="opt-npm" checked> Check npm registry
+      </label>
+      <label class="opt-label">
+        <input type="checkbox" id="opt-blocklist" checked> Fetch latest blocklist
+      </label>
+    </div>
+    <div style="padding:.65rem 1rem;border-top:1px solid var(--border)">
+      <button class="btn btn-primary" id="scan-btn" onclick="runScan()" disabled>Scan config</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">scan results</span>
+      <div class="panel-actions">
+        <button class="btn" onclick="copyResults()">copy json</button>
+      </div>
+    </div>
+    <div class="results" id="results">
+      <div class="empty-state">
+        <div class="empty-icon">🛡</div>
+        <div>Paste a config on the left, then click Scan</div>
+      </div>
+    </div>
+    <div class="summary" id="summary" style="display:none"></div>
+  </div>
+</div>
+
+<footer>
+  <a href="https://github.com/FadedCantCode/Fabrica-STAR">Fabrica-STAR</a> &nbsp;·&nbsp;
+  MIT License &nbsp;·&nbsp;
+  <a href="https://github.com/FadedCantCode/Fabrica-STAR/issues/new?labels=flagged-server">Report a malicious server</a>
+</footer>
+
+<script>
+const REMOTE_BLOCKLIST = 'https://raw.githubusercontent.com/FadedCantCode/Fabrica-STAR/main/data/known-flagged-servers.json';
+const RUNNERS = new Set(['npx','bunx','pnpm','uvx','pipx']);
+const POPULAR_NAMES = ['mcp-server-filesystem','mcp-server-github','mcp-server-fetch','mcp-server-git','mcp-server-slack','mcp-remote','server-filesystem','server-github','server-fetch'];
+const TRUSTED_SCOPES = new Set(['@modelcontextprotocol','@anthropic-ai','@openai','@github','@google','@microsoft','@aws-sdk']);
+const SECRET_PATTERNS = [/^sk-[A-Za-z0-9]{20,}$/,/^ghp_[A-Za-z0-9]{30,}$/,/^github_pat_[A-Za-z0-9_]{30,}$/,/^AKIA[A-Z0-9]{16}$/,/^xox[baprs]-[A-Za-z0-9-]{10,}$/,/^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/];
+const SEV_RANK = {info:0,low:1,medium:2,high:3,critical:4};
+
+let lastResults = null;
+
+function onInputChange() {
+  const v = document.getElementById('config-input').value.trim();
+  document.getElementById('scan-btn').disabled = !v;
+}
+
+function loadExample() {
+  document.getElementById('config-input').value = JSON.stringify({
+    mcpServers: {
+      filesystem: { command: 'npx', args: ['-y', '@modelcontextprotocol/server-filesystem', '/'] },
+      github: { command: 'npx', args: ['@modelcontextprotocol/server-github'], env: { GITHUB_TOKEN: 'ghp_' + 'a'.repeat(36) } },
+      'internal-api': { url: 'http://internal.example.com/mcp' },
+      'well-configured': { command: 'npx', args: ['-y', '@modelcontextprotocol/server-fetch@1.4.0'], env: { API_KEY: '${MY_API_KEY}' } }
+    }
+  }, null, 2);
+  document.getElementById('scan-btn').disabled = false;
+}
+
+function clearInput() {
+  document.getElementById('config-input').value = '';
+  document.getElementById('scan-btn').disabled = true;
+  document.getElementById('results').innerHTML = '<div class="empty-state"><div class="empty-icon">🛡</div><div>Paste a config on the left, then click Scan</div></div>';
+  document.getElementById('summary').style.display = 'none';
+  lastResults = null;
+}
+
+function isPlaceholder(v) { return /^\$\{.+\}$|^\$[A-Z_][A-Z0-9_]*$|^<.*>$|^(YOUR_|REPLACE_|TODO|XXX)/i.test(v); }
+function isLocalhost(url) { try { const h = new URL(url).hostname; return h==='localhost'||h==='127.0.0.1'||h==='::1'; } catch { return false; } }
+function hasVersionPin(arg) { const s = arg.startsWith('@') ? arg.slice(1) : arg; return s.includes('@'); }
+function isTrustedScope(pkg) { if (!pkg.startsWith('@')) return false; return TRUSTED_SCOPES.has(pkg.split('/')[0]); }
+function editDist(a, b) {
+  const m=a.length,n=b.length,dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+function typosquat(pkg) {
+  const bare = pkg.startsWith('@') ? pkg.split('/').slice(1).join('/') : pkg;
+  for (const p of POPULAR_NAMES) { const d=editDist(bare.toLowerCase(),p.toLowerCase()); if(d>0&&d<=2&&bare!==p) return p; }
+  return null;
+}
+function extractPkg(server) {
+  if (!server.command || !RUNNERS.has(server.command)) return null;
+  const arg = (server.args||[]).find(a=>!a.startsWith('-'));
+  if (!arg) return null;
+  if (arg.startsWith('@')) { const s=arg.slice(1); const i=s.indexOf('@'); return i>-1?'@'+s.slice(0,i):arg; }
+  const i=arg.indexOf('@'); return i>0?arg.slice(0,i):arg;
+}
+function rollUp(findings) { return findings.reduce((w,f)=>SEV_RANK[f.severity]>SEV_RANK[w]?f.severity:w,'info'); }
+
+function runConfigRules(server, knownBad) {
+  const findings = [];
+  // Version pin
+  if (server.command && RUNNERS.has(server.command)) {
+    const pkg = (server.args||[]).find(a=>!a.startsWith('-'));
+    if (pkg && !hasVersionPin(pkg)) findings.push({ ruleId:'no-version-pin', severity:'medium', message:`"${server.command} ${pkg}" has no version pin — will silently run "latest" on every launch.` });
+  }
+  // Hardcoded secrets
+  if (server.env) {
+    for (const [k,v] of Object.entries(server.env)) {
+      if (!isPlaceholder(v) && SECRET_PATTERNS.some(r=>r.test(v)))
+        findings.push({ ruleId:'hardcoded-secret', severity:'high', message:`env var "${k}" looks like a literal credential. If this config is committed or shared, it leaks.` });
+    }
+  }
+  // Insecure transport
+  if (server.transport==='http' && server.url?.startsWith('http://')) {
+    if (isLocalhost(server.url)) findings.push({ ruleId:'insecure-transport-local', severity:'info', message:`Connects over plain HTTP to localhost — low risk.` });
+    else findings.push({ ruleId:'insecure-transport', severity:'high', message:`Connects over plain HTTP to ${server.url}. Use https:// to prevent interception.` });
+  }
+  // Unscoped filesystem
+  if ((server.args||[]).some(a=>a==='/'||a==='C:\\'||a==='~'))
+    findings.push({ ruleId:'unscoped-filesystem-access', severity:'medium', message:`Configured with root filesystem access. Scope to the narrowest directory the server actually needs.` });
+  // Known flagged
+  const haystacks = [server.name, server.command, ...(server.args||[]), server.url].filter(Boolean).map(v=>v.toLowerCase());
+  for (const entry of knownBad) {
+    if (haystacks.some(h=>h.includes(entry.match.toLowerCase())))
+      findings.push({ ruleId:'known-flagged-server', severity:entry.severity, message:`Matches known-flagged entry "${entry.match}": ${entry.reason}` });
+  }
+  // Typosquat
+  const pkg = extractPkg(server);
+  if (pkg) {
+    const target = typosquat(pkg);
+    if (target) findings.push({ ruleId:'npm-typosquat', severity:'high', message:`"${pkg}" is 1-2 chars from "${target}" — possible typosquat. Verify this is the package you intended.` });
+  }
+  return findings;
+}
+
+async function runScan() {
+  const raw = document.getElementById('config-input').value.trim();
+  let data;
+  try { data = JSON.parse(raw); } catch(e) {
+    showError('Invalid JSON: ' + e.message);
+    return;
+  }
+
+  document.getElementById('results').innerHTML = '<div class="scanning"><div class="dot"></div><div class="dot"></div><div class="dot"></div>&nbsp; Scanning...</div>';
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('scan-btn').disabled = true;
+
+  const useBlocklist = document.getElementById('opt-blocklist').checked;
+  const useNpm = document.getElementById('opt-npm').checked;
+
+  let knownBad = [];
+  if (useBlocklist) {
+    try {
+      const r = await fetch(REMOTE_BLOCKLIST);
+      if (r.ok) { const j = await r.json(); knownBad = j.entries.filter(e=>e.match!=='example-flagged-server'); }
+    } catch {}
+  }
+
+  const servers = data.mcpServers || {};
+  const reports = [];
+
+  for (const [name, entry] of Object.entries(servers)) {
+    if (typeof entry !== 'object' || !entry) continue;
+    const url = typeof entry.url==='string' ? entry.url : undefined;
+    const command = typeof entry.command==='string' ? entry.command : undefined;
+    const transport = url ? 'http' : command ? 'stdio' : 'unknown';
+    const server = { name, transport, command, args: Array.isArray(entry.args)?entry.args:[], url, env: entry.env||{} };
+
+    const findings = runConfigRules(server, knownBad);
+
+    if (useNpm && command && RUNNERS.has(command)) {
+      const pkg = extractPkg(server);
+      if (pkg && !isTrustedScope(pkg)) {
+        try {
+          const encoded = pkg.startsWith('@') ? pkg.replace('/','%2F') : pkg;
+          const [metaRes, dlRes] = await Promise.allSettled([
+            fetch(`https://registry.npmjs.org/${encoded}`, {signal:AbortSignal.timeout(4000)}),
+            fetch(`https://api.npmjs.org/downloads/point/last-week/${encoded}`, {signal:AbortSignal.timeout(3000)})
+          ]);
+          if (metaRes.status==='fulfilled' && metaRes.value.ok) {
+            const meta = await metaRes.value.json();
+            const created = meta.time?.created ? new Date(meta.time.created) : null;
+            const days = created ? Math.floor((Date.now()-created)/86400000) : 9999;
+            if (days < 30) findings.push({ ruleId:'npm-very-new-package', severity:'medium', message:`"${pkg}" was published ${days} day${days===1?'':'s'} ago. New packages have had less community review.` });
+          }
+          if (dlRes.status==='fulfilled' && dlRes.value.ok) {
+            const dl = await dlRes.value.json();
+            const metaDays = (() => { try { const m=metaRes.value; return m.ok?9999:0; } catch{return 0;} })();
+            if ((dl.downloads||0) < 100) findings.push({ ruleId:'npm-low-download-count', severity:'low', message:`"${pkg}" has fewer than 100 weekly downloads. Factor into your trust assessment.` });
+          }
+        } catch {}
+      }
+    }
+
+    reports.push({ server: name, findings, riskLevel: rollUp(findings) });
+  }
+
+  lastResults = reports;
+  renderResults(reports);
+  document.getElementById('scan-btn').disabled = false;
+}
+
+function renderResults(reports) {
+  if (!reports.length) {
+    document.getElementById('results').innerHTML = '<div class="empty-state"><div class="empty-icon">🤷</div><div>No mcpServers found in this config.</div></div>';
+    return;
+  }
+
+  const counts = {info:0,low:0,medium:0,high:0,critical:0};
+  reports.forEach(r=>counts[r.riskLevel]++);
+  const clean = counts.info+counts.low;
+
+  document.getElementById('results').innerHTML = reports.map((r,i) => `
+    <div class="server">
+      <div class="server-head" onclick="toggleServer(${i})">
+        <span class="sev-badge sev-${r.riskLevel==='info'?'clean':r.riskLevel}">${r.riskLevel==='info'?'CLEAN':r.riskLevel.toUpperCase()}</span>
+        <span class="server-name">${r.server}</span>
+        <span class="chevron" id="chev-${i}">▼</span>
+      </div>
+      <div class="findings" id="find-${i}">
+        ${r.findings.length ? r.findings.map(f=>`
+          <div class="finding">
+            <div class="finding-rule">[${f.ruleId}] · ${f.severity}</div>
+            <div class="finding-msg">${f.message}</div>
+          </div>`).join('') : `<div class="clean-msg">✓ No issues found</div>`}
+      </div>
+    </div>`).join('');
+
+  const parts = [`${reports.length} server${reports.length===1?'':'s'} scanned`];
+  if (clean) parts.push(`<span class="stat-val c-clean">${clean} clean</span>`);
+  if (counts.medium) parts.push(`<span class="stat-val c-medium">${counts.medium} medium</span>`);
+  if (counts.high) parts.push(`<span class="stat-val c-high">${counts.high} high</span>`);
+  if (counts.critical) parts.push(`<span class="stat-val c-critical">${counts.critical} critical</span>`);
+
+  const summary = document.getElementById('summary');
+  summary.innerHTML = parts.map(p=>`<span class="stat">${p}</span>`).join('<span class="stat" style="color:var(--text3)">·</span>');
+  summary.style.display = 'flex';
+}
+
+function toggleServer(i) {
+  const f = document.getElementById('find-'+i);
+  const c = document.getElementById('chev-'+i);
+  const open = f.classList.toggle('open');
+  c.classList.toggle('open', open);
+}
+
+function showError(msg) {
+  document.getElementById('results').innerHTML = `<div class="empty-state"><div style="color:var(--red);font-family:var(--mono);font-size:12px">${msg}</div></div>`;
+}
+
+function copyResults() {
+  if (!lastResults) return;
+  navigator.clipboard.writeText(JSON.stringify(lastResults, null, 2));
+}
+</script>
+</body>
+</html>

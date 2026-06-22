@@ -9,9 +9,19 @@
     "scanner",
     "ai-agents",
     "claude",
-    "llm-tools"
+    "llm-tools",
+    "cli"
   ],
   "license": "MIT",
+  "author": "FadedCantCode",
+  "homepage": "https://github.com/FadedCantCode/Fabrica-STAR#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FadedCantCode/Fabrica-STAR.git"
+  },
+  "bugs": {
+    "url": "https://github.com/FadedCantCode/Fabrica-STAR/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,7 +30,9 @@
   },
   "files": [
     "dist",
-    "data"
+    "data",
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=18"
@@ -41,5 +53,8 @@
     "tsx": "^4.16.2",
     "typescript": "^5.5.3",
     "vitest": "^4.1.9"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
