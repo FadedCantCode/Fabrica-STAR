@@ -29,19 +29,23 @@ function parseEntries(raw: string): KnownBadEntry[] {
   return parsed.entries.filter((e) => e.match !== "example-flagged-server");
 }
 
-function loadBundled(): KnownBadEntry[] {
-  const candidates = [
-    join(__dirname, "..", "data", "known-flagged-servers.json"),
-    join(__dirname, "..", "..", "data", "known-flagged-servers.json"),
-  ];
-  for (const path of candidates) {
-    try {
-      return parseEntries(readFileSync(path, "utf-8"));
-    } catch {
-      continue;
-    }
-  }
-  return [];
+function parseEntries(raw: string): KnownBadEntry[] {
+  const parsed = JSON.parse(raw) as unknown;
+  if (typeof parsed !== "object" || parsed === null) throw new Error("expected object");
+  const obj = parsed as Record<string, unknown>;
+  if (typeof obj.version !== "number") throw new Error("missing version field");
+  if (!Array.isArray(obj.entries)) throw new Error("missing entries array");
+  return (obj.entries as unknown[]).filter((e): e is KnownBadEntry => {
+    if (typeof e !== "object" || e === null) return false;
+    const entry = e as Record<string, unknown>;
+    return (
+      typeof entry.match === "string" && entry.match.length > 0 &&
+      typeof entry.severity === "string" &&
+      ["info", "low", "medium", "high", "critical"].includes(entry.severity) &&
+      typeof entry.reason === "string" &&
+      entry.match !== "example-flagged-server"
+    );
+  });
 }
 
 function loadCached(): KnownBadEntry[] | null {
