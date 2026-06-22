@@ -1,7 +1,9 @@
 import type { Finding, McpServerEntry } from "../types.js";
 import { loadKnownBadList } from "../knownBad.js";
 
-const RUNNERS_NEEDING_VERSION_PIN = new Set(["npx", "bunx", "pnpm", "uvx", "pipx"]);
+const NPM_RUNNERS = new Set(["npx", "bunx", "pnpm"]);
+const PYTHON_RUNNERS = new Set(["uvx", "pipx"]);
+const RUNNERS_NEEDING_VERSION_PIN = new Set([...NPM_RUNNERS, ...PYTHON_RUNNERS]);
 
 const SECRET_VALUE_PATTERNS: RegExp[] = [
   /^sk-[A-Za-z0-9]{20,}$/,
@@ -25,7 +27,10 @@ function isLocalhost(url: string): boolean {
   }
 }
 
-function hasVersionPin(arg: string): boolean {
+function hasVersionPin(arg: string, runner: string): boolean {
+  if (PYTHON_RUNNERS.has(runner)) {
+    return /[=!<>~]/.test(arg);
+  }
   const withoutScope = arg.startsWith("@") ? arg.slice(1) : arg;
   return withoutScope.includes("@");
 }
@@ -34,13 +39,14 @@ export function checkVersionPin(server: McpServerEntry): Finding[] {
   if (!server.command || !RUNNERS_NEEDING_VERSION_PIN.has(server.command)) return [];
   const pkgArg = (server.args ?? []).find((a) => !a.startsWith("-"));
   if (!pkgArg) return [];
-  if (hasVersionPin(pkgArg)) return [];
+  if (hasVersionPin(pkgArg, server.command)) return [];
+  const examplePin = PYTHON_RUNNERS.has(server.command) ? `${pkgArg}==1.2.3` : `${pkgArg}@1.2.3`;
   return [
     {
       ruleId: "no-version-pin",
       severity: "medium",
       target: server.name,
-      message: `"${server.command} ${pkgArg}" has no version pin, so it will silently run whatever is published as "latest" on every launch. Pin a version (e.g. "${pkgArg}@1.2.3") to avoid an unreviewed update changing behavior under you.`,
+      message: `"${server.command} ${pkgArg}" has no version pin, so it will silently run whatever is published as "latest" on every launch. Pin a version (e.g. "${examplePin}") to avoid an unreviewed update changing behavior under you.`,
     },
   ];
 }
@@ -131,10 +137,12 @@ export async function runConfigRules(server: McpServerEntry): Promise<Finding[]>
   ];
 
   const { checkNpmHeuristics } = await import("./npmHeuristics.js");
-  const [flaggedFindings, npmFindings] = await Promise.all([
+  const { checkBlastRadius } = await import("./blastRadius.js");
+  const [flaggedFindings, npmFindings, blastFindings] = await Promise.all([
     checkKnownFlagged(server),
     checkNpmHeuristics(server),
+    Promise.resolve(checkBlastRadius(server)),
   ]);
 
-  return [...syncFindings, ...flaggedFindings, ...npmFindings];
+  return [...syncFindings, ...flaggedFindings, ...npmFindings, ...blastFindings];
 }

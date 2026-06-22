@@ -85,3 +85,21 @@ describe("checkUnscopedFilesystemAccess", () => {
     expect(findings).toHaveLength(0);
   });
 });
+
+describe("checkVersionPin — Python runners (uvx/pipx)", () => {
+  it("does not flag uvx with PEP 508 == pin", () => {
+    const findings = checkVersionPin(makeServer({ command: "uvx", args: ["ruff==0.4.0"] }));
+    expect(findings).toHaveLength(0);
+  });
+
+  it("does not flag uvx with >= pin", () => {
+    const findings = checkVersionPin(makeServer({ command: "uvx", args: ["ruff>=0.4.0"] }));
+    expect(findings).toHaveLength(0);
+  });
+
+  it("flags uvx without any version specifier", () => {
+    const findings = checkVersionPin(makeServer({ command: "uvx", args: ["ruff"] }));
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toContain("==");
+  });
+});

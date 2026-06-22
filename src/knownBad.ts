@@ -11,6 +11,11 @@ export interface KnownBadEntry {
   reason: string;
 }
 
+interface KnownBadFile {
+  version: number;
+  entries: KnownBadEntry[];
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const REMOTE_URL =
@@ -75,6 +80,7 @@ async function fetchRemote(): Promise<KnownBadEntry[] | null> {
     if (!res.ok) return null;
     const raw = await res.text();
     const entries = parseEntries(raw);
+    // Persist to cache
     mkdirSync(CACHE_DIR, { recursive: true });
     writeFileSync(CACHE_PATH, raw, "utf-8");
     return entries;

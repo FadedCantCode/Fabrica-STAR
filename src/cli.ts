@@ -20,6 +20,8 @@ function parseFailOn(value: string): Severity {
 }
 
 function openBrowser(url: string): void {
+  // Use execFile instead of execSync with a shell string to avoid shell injection.
+  // Each platform's open command accepts the URL as a discrete argument.
   const [cmd, args]: [string, string[]] =
     process.platform === "darwin" ? ["open", [url]] :
     process.platform === "win32"  ? ["cmd", ["/c", "start", "", url]] :
