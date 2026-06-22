@@ -61,3 +61,16 @@ toward over-flagging, but real false positives are still bugs.
   `validate` or `process`).
 - No new runtime dependencies without discussion in an issue first — part of
   this tool's value is that it has a tiny, auditable dependency tree.
+
+## Security philosophy
+
+STAR does not decide whether an MCP server is "safe".
+It surfaces signals that help developers make informed decisions.
+
+Rules should answer:
+- What permission does this server request?
+- What data can it access?
+- What actions can it perform?
+- Why should this finding matter?
+
+Avoid rules based on reputation or assumptions.
