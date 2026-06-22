@@ -1,4 +1,4 @@
-# Contributing to mcp-sentinel
+# Contributing to STAR
 
 Thanks for considering a contribution. This project stays useful only if its
 rules and known-bad list are accurate, so the bar for new entries is
