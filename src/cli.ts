@@ -28,12 +28,13 @@ program
   .command("scan")
   .description("Auto-discover known MCP client configs (Claude Desktop, Claude Code, Cursor) and scan every configured server.")
   .option("--json", "output machine-readable JSON instead of a formatted report")
+  .option("--offline", "skip remote known-bad list fetch and npm registry checks")
   .option("--fail-on <severity>", "exit non-zero if any finding is at or above this severity", parseFailOn, "high" as Severity)
-  .action((opts: { json?: boolean; failOn: Severity }) => {
+  .action(async (opts: { json?: boolean; offline?: boolean; failOn: Severity }) => {
+    if (opts.offline) process.env.FABRICA_STAR_OFFLINE = "1";
     const files = discoverConfigFiles();
-    const result = scanConfigFiles(files);
+    const result = await scanConfigFiles(files);
     console.log(opts.json ? formatJsonReport(result) : formatTextReport(result));
-
     const worst = rollUpSeverity(result.servers.flatMap((s) => s.findings));
     process.exitCode = isAtLeast(worst, opts.failOn) ? 1 : 0;
   });
@@ -42,16 +43,17 @@ program
   .command("scan-config <path>")
   .description("Scan a specific MCP client config file.")
   .option("--json", "output machine-readable JSON instead of a formatted report")
+  .option("--offline", "skip remote known-bad list fetch and npm registry checks")
   .option("--fail-on <severity>", "exit non-zero if any finding is at or above this severity", parseFailOn, "high" as Severity)
-  .action((path: string, opts: { json?: boolean; failOn: Severity }) => {
+  .action(async (path: string, opts: { json?: boolean; offline?: boolean; failOn: Severity }) => {
     if (!existsSync(path)) {
       console.error(`No such file: ${path}`);
       process.exitCode = 2;
       return;
     }
-    const result = scanConfigFiles([path]);
+    if (opts.offline) process.env.FABRICA_STAR_OFFLINE = "1";
+    const result = await scanConfigFiles([path]);
     console.log(opts.json ? formatJsonReport(result) : formatTextReport(result));
-
     const worst = rollUpSeverity(result.servers.flatMap((s) => s.findings));
     process.exitCode = isAtLeast(worst, opts.failOn) ? 1 : 0;
   });
@@ -69,9 +71,8 @@ program
     }
     const findings = scanSourceTree(path);
     console.log(opts.json ? JSON.stringify(findings, null, 2) : formatSourceReport(findings, path));
-
     const worst = rollUpSeverity(findings);
     process.exitCode = isAtLeast(worst, opts.failOn) ? 1 : 0;
   });
 
-program.parse();
+program.parseAsync();

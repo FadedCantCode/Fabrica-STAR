@@ -1,14 +1,25 @@
 {
-  "$schema": "./known-flagged-servers.schema.json",
   "version": 1,
-  "updated": "2026-06-21",
+  "updated": "2026-06-22",
   "_comment": "Community-maintained list of MCP server identifiers with documented security issues. Add entries via PR with a 'reason' linking to a public advisory, issue, or writeup. Do not add entries based on speculation.",
   "entries": [
     {
-      "match": "example-flagged-server",
+      "match": "postmark-mcp",
       "matchType": "name",
       "severity": "critical",
-      "reason": "Placeholder entry. Replace with real, sourced entries via PR. See CONTRIBUTING.md."
+      "reason": "First confirmed in-the-wild malicious MCP server — a supply chain backdoor that exfiltrated email data from approximately 300 organizations before discovery. Disclosed by Koi Security, September 2025. Remove immediately if present. See: https://dev.to/piiiico/mcp-security-vulnerabilities-in-2026-40-cves-and-counting-4pco"
+    },
+    {
+      "match": "mcp-remote",
+      "matchType": "name",
+      "severity": "high",
+      "reason": "CVE-2025-6514 (CVSS 9.6) — authentication bypass allowed unauthenticated remote code execution. Affected 437,000+ downloads. Pin to a patched version and verify your version is not vulnerable before use. See: https://agent-wars.com/news/2026-03-13-mcp-security-2026-30-cves-in-60-days-what-went-wrong"
+    },
+    {
+      "match": "@akoskm/create-mcp-server-stdio",
+      "matchType": "name",
+      "severity": "high",
+      "reason": "CVE-2025-54994 — command injection vulnerability in stdio transport handling. See: https://thehackernews.com/2026/04/anthropic-mcp-design-vulnerability.html"
     }
   ]
 }

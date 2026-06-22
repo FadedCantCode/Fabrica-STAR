@@ -4,6 +4,8 @@
 
 A lightweight, zero-config security scanner for [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers — the things Claude Desktop, Claude Code, Cursor, and friends connect to when you give an AI agent tools.
 
+[![CI](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml/badge.svg)](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml)
+[![CI](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml/badge.svg)](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](package.json)
 

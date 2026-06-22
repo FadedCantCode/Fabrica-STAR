@@ -7,6 +7,9 @@ import {
 } from "../src/rules/configRules.js";
 import type { McpServerEntry } from "../src/types.js";
 
+// Run all network-dependent rules in offline mode during tests
+process.env.FABRICA_STAR_OFFLINE = "1";
+
 function makeServer(overrides: Partial<McpServerEntry>): McpServerEntry {
   return { name: "test-server", transport: "stdio", sourceFile: "test.json", ...overrides };
 }

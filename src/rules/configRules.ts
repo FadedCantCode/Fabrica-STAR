@@ -3,15 +3,13 @@ import { loadKnownBadList } from "../knownBad.js";
 
 const RUNNERS_NEEDING_VERSION_PIN = new Set(["npx", "bunx", "pnpm", "uvx", "pipx"]);
 
-// Patterns that strongly suggest a literal secret was pasted into a config
-// file instead of being referenced via ${ENV_VAR} substitution.
 const SECRET_VALUE_PATTERNS: RegExp[] = [
-  /^sk-[A-Za-z0-9]{20,}$/, // OpenAI/Anthropic-style API keys
-  /^ghp_[A-Za-z0-9]{30,}$/, // GitHub personal access token
+  /^sk-[A-Za-z0-9]{20,}$/,
+  /^ghp_[A-Za-z0-9]{30,}$/,
   /^github_pat_[A-Za-z0-9_]{30,}$/,
-  /^AKIA[A-Z0-9]{16}$/, // AWS access key id
-  /^xox[baprs]-[A-Za-z0-9-]{10,}$/, // Slack tokens
-  /^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/, // JWT
+  /^AKIA[A-Z0-9]{16}$/,
+  /^xox[baprs]-[A-Za-z0-9-]{10,}$/,
+  /^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,
 ];
 
 function looksLikePlaceholder(value: string): boolean {
@@ -28,7 +26,6 @@ function isLocalhost(url: string): boolean {
 }
 
 function hasVersionPin(arg: string): boolean {
-  // Strip a leading scope ("@scope/pkg") before checking for an "@version" suffix.
   const withoutScope = arg.startsWith("@") ? arg.slice(1) : arg;
   return withoutScope.includes("@");
 }
@@ -38,7 +35,6 @@ export function checkVersionPin(server: McpServerEntry): Finding[] {
   const pkgArg = (server.args ?? []).find((a) => !a.startsWith("-"));
   if (!pkgArg) return [];
   if (hasVersionPin(pkgArg)) return [];
-
   return [
     {
       ruleId: "no-version-pin",
@@ -103,8 +99,8 @@ export function checkUnscopedFilesystemAccess(server: McpServerEntry): Finding[]
   ];
 }
 
-export function checkKnownFlagged(server: McpServerEntry): Finding[] {
-  const knownBad = loadKnownBadList();
+export async function checkKnownFlagged(server: McpServerEntry): Promise<Finding[]> {
+  const knownBad = await loadKnownBadList();
   if (knownBad.length === 0) return [];
 
   const haystacks = [server.name, server.command, ...(server.args ?? []), server.url]
@@ -126,14 +122,19 @@ export function checkKnownFlagged(server: McpServerEntry): Finding[] {
   return findings;
 }
 
-export const CONFIG_RULES = [
-  checkVersionPin,
-  checkHardcodedSecrets,
-  checkInsecureTransport,
-  checkUnscopedFilesystemAccess,
-  checkKnownFlagged,
-];
+export async function runConfigRules(server: McpServerEntry): Promise<Finding[]> {
+  const syncFindings = [
+    ...checkVersionPin(server),
+    ...checkHardcodedSecrets(server),
+    ...checkInsecureTransport(server),
+    ...checkUnscopedFilesystemAccess(server),
+  ];
 
-export function runConfigRules(server: McpServerEntry): Finding[] {
-  return CONFIG_RULES.flatMap((rule) => rule(server));
+  const { checkNpmHeuristics } = await import("./npmHeuristics.js");
+  const [flaggedFindings, npmFindings] = await Promise.all([
+    checkKnownFlagged(server),
+    checkNpmHeuristics(server),
+  ]);
+
+  return [...syncFindings, ...flaggedFindings, ...npmFindings];
 }

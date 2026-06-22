@@ -7,8 +7,8 @@ rules and known-bad list are accurate, so the bar for new entries is
 ## Development setup
 
 ```bash
-git clone https://github.com/<your-fork>/fabrica-star.git
-cd fabrica-star
+git clone https://github.com/<your-fork>/Fabrica-STAR.git
+cd Fabrica-STAR
 npm install
 npm run build
 npm test
