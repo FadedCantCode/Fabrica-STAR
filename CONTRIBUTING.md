@@ -74,3 +74,10 @@ Rules should answer:
 - Why should this finding matter?
 
 Avoid rules based on reputation or assumptions.
+STAR reports security signals, not absolute verdicts.
+
+The goal is to help developers understand what an MCP server can access
+and what risks it introduces before trusting it.
+
+Prefer evidence-backed findings over assumptions.
+
