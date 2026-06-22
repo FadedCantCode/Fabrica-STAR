@@ -76,7 +76,7 @@ Try it yourself against the bundled example:
 
 ```bash
 git clone https://github.com/FadedCantCode/Fabrica-STAR.git
-cd mcp-sentinel && npm install && npm run build
+cd Fabrica-STAR && npm install && npm run build
 node dist/cli.js scan-config examples/sample-claude-config.json
 ```
 
