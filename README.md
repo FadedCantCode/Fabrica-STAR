@@ -1,4 +1,4 @@
-# mcp-sentinel
+# STAR (mcp-sentinel)
 
 **Know what you're installing before you `npx` it.**
 
@@ -76,7 +76,7 @@ Summary: 4 servers scanned · 1 clean · 1 medium · 2 high
 Try it yourself against the bundled example:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/mcp-sentinel.git
+git clone https://github.com/FadedCantCode/Fabrica-STAR.git
 cd mcp-sentinel && npm install && npm run build
 node dist/cli.js scan-config examples/sample-claude-config.json
 ```
