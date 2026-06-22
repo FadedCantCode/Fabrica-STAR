@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { existsSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { discoverConfigFiles } from "./discovery.js";
 import { scanConfigFiles } from "./scanner.js";
 import { scanSourceTree } from "./rules/sourceScanner.js";
@@ -20,15 +20,13 @@ function parseFailOn(value: string): Severity {
 }
 
 function openBrowser(url: string): void {
-  try {
-    const cmd =
-      process.platform === "darwin" ? "open" :
-      process.platform === "win32"  ? "start" :
-                                      "xdg-open";
-    execSync(`${cmd} "${url}"`, { stdio: "ignore" });
-  } catch {
-    // opening the browser failed — just print the URL so user can copy it
-  }
+  const [cmd, args]: [string, string[]] =
+    process.platform === "darwin" ? ["open", [url]] :
+    process.platform === "win32"  ? ["cmd", ["/c", "start", "", url]] :
+                                    ["xdg-open", [url]];
+  execFile(cmd, args, { stdio: "ignore" } as never, () => {
+    // Silently ignore errors — the URL is always printed below as a fallback.
+  });
 }
 
 const program = new Command();
