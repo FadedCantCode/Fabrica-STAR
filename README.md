@@ -4,7 +4,8 @@
 
 A lightweight, zero-config security scanner for [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers — the things Claude Desktop, Claude Code, Cursor, and friends connect to when you give an AI agent tools.
 
-
+[![CI](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml/badge.svg)](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml)
+[![CI](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml/badge.svg)](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](package.json)
 
@@ -84,12 +85,14 @@ node dist/cli.js scan-config examples/sample-claude-config.json
 ## CLI reference
 
 ```
-fabrica-star scan                  Auto-discover and scan known client configs
-fabrica-star scan-config <path>    Scan a specific config file
-fabrica-star scan-source <path>    Static-scan a server's source for risky code patterns
+fabrica-star scan                       Auto-discover and scan known client configs
+fabrica-star scan-config <path>         Scan a specific config file
+fabrica-star scan-source <path>         Static-scan a server's source for risky code patterns
+fabrica-star report <server-or-pkg>     Open a pre-filled GitHub issue to flag a suspicious server
 
-Options (all commands):
+Options (scan commands):
   --json                Machine-readable output, for piping into other tools
+  --offline             Skip remote known-bad list fetch and npm registry checks
   --fail-on <severity>  Exit non-zero at or above this severity (default: high)
                          One of: info, low, medium, high, critical
 ```

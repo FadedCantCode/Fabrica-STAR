@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { existsSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { discoverConfigFiles } from "./discovery.js";
 import { scanConfigFiles } from "./scanner.js";
 import { scanSourceTree } from "./rules/sourceScanner.js";
@@ -8,6 +9,7 @@ import { formatTextReport, formatJsonReport, formatSourceReport } from "./report
 import { isAtLeast, rollUpSeverity } from "./scorer.js";
 import type { Severity } from "./types.js";
 
+const REPO = "FadedCantCode/Fabrica-STAR";
 const VALID_SEVERITIES: Severity[] = ["info", "low", "medium", "high", "critical"];
 
 function parseFailOn(value: string): Severity {
@@ -15,6 +17,18 @@ function parseFailOn(value: string): Severity {
     throw new Error(`--fail-on must be one of: ${VALID_SEVERITIES.join(", ")}`);
   }
   return value as Severity;
+}
+
+function openBrowser(url: string): void {
+  try {
+    const cmd =
+      process.platform === "darwin" ? "open" :
+      process.platform === "win32"  ? "start" :
+                                      "xdg-open";
+    execSync(`${cmd} "${url}"`, { stdio: "ignore" });
+  } catch {
+    // opening the browser failed — just print the URL so user can copy it
+  }
 }
 
 const program = new Command();
@@ -73,6 +87,40 @@ program
     console.log(opts.json ? JSON.stringify(findings, null, 2) : formatSourceReport(findings, path));
     const worst = rollUpSeverity(findings);
     process.exitCode = isAtLeast(worst, opts.failOn) ? 1 : 0;
+  });
+
+program
+  .command("report <server-or-package>")
+  .description("Open a pre-filled GitHub issue to flag a suspicious or malicious MCP server.")
+  .option("--severity <severity>", "suggested severity (low, medium, high, critical)", "high")
+  .action((target: string, opts: { severity: string }) => {
+    const title = `Flag: ${target}`;
+    const body = [
+      `## Server / package`,
+      `\`${target}\``,
+      ``,
+      `## Suggested severity`,
+      opts.severity,
+      ``,
+      `## Why this should be flagged`,
+      `<!-- Link to a CVE, security advisory, GitHub issue, or writeup. -->`,
+      `<!-- Entries without a verifiable public source will be asked for one before merge. -->`,
+      ``,
+      `## Evidence / source`,
+      ``,
+      `## Steps to reproduce (optional)`,
+      ``,
+    ].join("\n");
+
+    const url =
+      `https://github.com/${REPO}/issues/new` +
+      `?title=${encodeURIComponent(title)}` +
+      `&body=${encodeURIComponent(body)}` +
+      `&labels=flagged-server`;
+
+    console.log(`\nOpening contribution form for "${target}"...`);
+    console.log(`\nIf your browser did not open, paste this URL manually:\n${url}\n`);
+    openBrowser(url);
   });
 
 program.parseAsync();
