@@ -6,11 +6,14 @@ import { discoverConfigFiles } from "./discovery.js";
 import { scanConfigFiles } from "./scanner.js";
 import { scanSourceTree } from "./rules/sourceScanner.js";
 import { formatTextReport, formatJsonReport, formatSourceReport } from "./report.js";
+import { formatSarifReport } from "./sarif.js";
 import { isAtLeast, rollUpSeverity } from "./scorer.js";
 import type { Severity } from "./types.js";
 
 const REPO = "FadedCantCode/Fabrica-STAR";
 const VALID_SEVERITIES: Severity[] = ["info", "low", "medium", "high", "critical"];
+const VALID_FORMATS = ["text", "json", "sarif"] as const;
+type OutputFormat = typeof VALID_FORMATS[number];
 
 function parseFailOn(value: string): Severity {
   if (!VALID_SEVERITIES.includes(value as Severity)) {
@@ -19,16 +22,19 @@ function parseFailOn(value: string): Severity {
   return value as Severity;
 }
 
+function parseFormat(value: string): OutputFormat {
+  if (!VALID_FORMATS.includes(value as OutputFormat)) {
+    throw new Error(`--format must be one of: ${VALID_FORMATS.join(", ")}`);
+  }
+  return value as OutputFormat;
+}
+
 function openBrowser(url: string): void {
-  // Use execFile instead of execSync with a shell string to avoid shell injection.
-  // Each platform's open command accepts the URL as a discrete argument.
   const [cmd, args]: [string, string[]] =
     process.platform === "darwin" ? ["open", [url]] :
     process.platform === "win32"  ? ["cmd", ["/c", "start", "", url]] :
                                     ["xdg-open", [url]];
-  execFile(cmd, args, { stdio: "ignore" } as never, () => {
-    // Silently ignore errors — the URL is always printed below as a fallback.
-  });
+  execFile(cmd, args, { stdio: "ignore" } as never, () => {});
 }
 
 const program = new Command();
@@ -36,19 +42,23 @@ const program = new Command();
 program
   .name("fabrica-star")
   .description("Security scanner for Model Context Protocol (MCP) servers and client configs.")
-  .version("0.1.0");
+  .version("0.1.3");
 
 program
   .command("scan")
   .description("Auto-discover known MCP client configs (Claude Desktop, Claude Code, Cursor) and scan every configured server.")
-  .option("--json", "output machine-readable JSON instead of a formatted report")
+  .option("--format <format>", "output format: text, json, sarif", parseFormat, "text" as OutputFormat)
+  .option("--json", "shorthand for --format json")
   .option("--offline", "skip remote known-bad list fetch and npm registry checks")
   .option("--fail-on <severity>", "exit non-zero if any finding is at or above this severity", parseFailOn, "high" as Severity)
-  .action(async (opts: { json?: boolean; offline?: boolean; failOn: Severity }) => {
+  .action(async (opts: { format: OutputFormat; json?: boolean; offline?: boolean; failOn: Severity }) => {
     if (opts.offline) process.env.FABRICA_STAR_OFFLINE = "1";
+    const fmt: OutputFormat = opts.json ? "json" : opts.format;
     const files = discoverConfigFiles();
     const result = await scanConfigFiles(files);
-    console.log(opts.json ? formatJsonReport(result) : formatTextReport(result));
+    if (fmt === "sarif") console.log(formatSarifReport(result));
+    else if (fmt === "json") console.log(formatJsonReport(result));
+    else console.log(formatTextReport(result));
     const worst = rollUpSeverity(result.servers.flatMap((s) => s.findings));
     process.exitCode = isAtLeast(worst, opts.failOn) ? 1 : 0;
   });
@@ -56,18 +66,22 @@ program
 program
   .command("scan-config <path>")
   .description("Scan a specific MCP client config file.")
-  .option("--json", "output machine-readable JSON instead of a formatted report")
+  .option("--format <format>", "output format: text, json, sarif", parseFormat, "text" as OutputFormat)
+  .option("--json", "shorthand for --format json")
   .option("--offline", "skip remote known-bad list fetch and npm registry checks")
   .option("--fail-on <severity>", "exit non-zero if any finding is at or above this severity", parseFailOn, "high" as Severity)
-  .action(async (path: string, opts: { json?: boolean; offline?: boolean; failOn: Severity }) => {
+  .action(async (path: string, opts: { format: OutputFormat; json?: boolean; offline?: boolean; failOn: Severity }) => {
     if (!existsSync(path)) {
       console.error(`No such file: ${path}`);
       process.exitCode = 2;
       return;
     }
     if (opts.offline) process.env.FABRICA_STAR_OFFLINE = "1";
+    const fmt: OutputFormat = opts.json ? "json" : opts.format;
     const result = await scanConfigFiles([path]);
-    console.log(opts.json ? formatJsonReport(result) : formatTextReport(result));
+    if (fmt === "sarif") console.log(formatSarifReport(result));
+    else if (fmt === "json") console.log(formatJsonReport(result));
+    else console.log(formatTextReport(result));
     const worst = rollUpSeverity(result.servers.flatMap((s) => s.findings));
     process.exitCode = isAtLeast(worst, opts.failOn) ? 1 : 0;
   });
@@ -75,16 +89,25 @@ program
 program
   .command("scan-source <path>")
   .description("Statically scan an MCP server's source code for risky patterns (eval, shell injection, hardcoded secrets, etc).")
-  .option("--json", "output machine-readable JSON instead of a formatted report")
+  .option("--format <format>", "output format: text, json, sarif", parseFormat, "text" as OutputFormat)
+  .option("--json", "shorthand for --format json")
   .option("--fail-on <severity>", "exit non-zero if any finding is at or above this severity", parseFailOn, "high" as Severity)
-  .action((path: string, opts: { json?: boolean; failOn: Severity }) => {
+  .action((path: string, opts: { format: OutputFormat; json?: boolean; failOn: Severity }) => {
     if (!existsSync(path)) {
       console.error(`No such file or directory: ${path}`);
       process.exitCode = 2;
       return;
     }
+    const fmt: OutputFormat = opts.json ? "json" : opts.format;
     const findings = scanSourceTree(path);
-    console.log(opts.json ? JSON.stringify(findings, null, 2) : formatSourceReport(findings, path));
+    if (fmt === "sarif") {
+      // Wrap source findings in a minimal ScanResult for the SARIF formatter
+      console.log(formatSarifReport({ servers: [], generalFindings: findings }));
+    } else if (fmt === "json") {
+      console.log(JSON.stringify(findings, null, 2));
+    } else {
+      console.log(formatSourceReport(findings, path));
+    }
     const worst = rollUpSeverity(findings);
     process.exitCode = isAtLeast(worst, opts.failOn) ? 1 : 0;
   });
