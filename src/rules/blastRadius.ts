@@ -9,6 +9,19 @@ export interface SensitiveMatch {
   severity: "medium" | "high" | "critical";
 }
 
+/** Paths that are system-level and should never be flagged as sensitive user data */
+function isSystemPath(filePath: string): boolean {
+  return (
+    filePath.startsWith("/etc/") ||
+    filePath.startsWith("/usr/") ||
+    filePath.startsWith("/lib/") ||
+    filePath.startsWith("/opt/") ||
+    filePath.startsWith("/var/") ||
+    filePath.startsWith("/snap/") ||
+    filePath.includes("/etc/skel/")
+  );
+}
+
 /** Known sensitive file/directory patterns and what they mean */
 const SENSITIVE_PATTERNS: Array<{
   test: (filePath: string, name: string, ext: string) => boolean;
@@ -39,9 +52,11 @@ const SENSITIVE_PATTERNS: Array<{
     reason: ".env file (may contain secrets)",
     severity: "high",
   },
-  // Private key files
+  // Private key files — only flag user-space files, not system CA bundles
   {
-    test: (_, n, ext) => ext === ".pem" || ext === ".key" || ext === ".p12" || ext === ".pfx",
+    test: (p, _, ext) =>
+      !isSystemPath(p) &&
+      (ext === ".pem" || ext === ".key" || ext === ".p12" || ext === ".pfx"),
     reason: "private key or certificate file",
     severity: "critical",
   },
@@ -51,9 +66,9 @@ const SENSITIVE_PATTERNS: Array<{
     reason: "Kubernetes credentials",
     severity: "critical",
   },
-  // npmrc with tokens
+  // npmrc with tokens — skip system/skel copies
   {
-    test: (_, n) => n === ".npmrc" || n === ".yarnrc",
+    test: (p, n) => !isSystemPath(p) && (n === ".npmrc" || n === ".yarnrc"),
     reason: "npm/yarn config (may contain registry tokens)",
     severity: "high",
   },
