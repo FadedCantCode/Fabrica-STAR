@@ -11,11 +11,6 @@ export interface KnownBadEntry {
   reason: string;
 }
 
-interface KnownBadFile {
-  version: number;
-  entries: KnownBadEntry[];
-}
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const REMOTE_URL =
@@ -25,16 +20,14 @@ const CACHE_PATH = join(CACHE_DIR, "known-flagged-servers.json");
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function parseEntries(raw: string): KnownBadEntry[] {
-  const parsed = JSON.parse(raw) as KnownBadFile;
-  return parsed.entries.filter((e) => e.match !== "example-flagged-server");
-}
-
-function parseEntries(raw: string): KnownBadEntry[] {
   const parsed = JSON.parse(raw) as unknown;
+
+  // Validate top-level shape before trusting any fetched data.
   if (typeof parsed !== "object" || parsed === null) throw new Error("expected object");
   const obj = parsed as Record<string, unknown>;
   if (typeof obj.version !== "number") throw new Error("missing version field");
   if (!Array.isArray(obj.entries)) throw new Error("missing entries array");
+
   return (obj.entries as unknown[]).filter((e): e is KnownBadEntry => {
     if (typeof e !== "object" || e === null) return false;
     const entry = e as Record<string, unknown>;
@@ -46,6 +39,21 @@ function parseEntries(raw: string): KnownBadEntry[] {
       entry.match !== "example-flagged-server"
     );
   });
+}
+
+function loadBundled(): KnownBadEntry[] {
+  const candidates = [
+    join(__dirname, "..", "data", "known-flagged-servers.json"),
+    join(__dirname, "..", "..", "data", "known-flagged-servers.json"),
+  ];
+  for (const path of candidates) {
+    try {
+      return parseEntries(readFileSync(path, "utf-8"));
+    } catch {
+      continue;
+    }
+  }
+  return [];
 }
 
 function loadCached(): KnownBadEntry[] | null {
@@ -67,7 +75,6 @@ async function fetchRemote(): Promise<KnownBadEntry[] | null> {
     if (!res.ok) return null;
     const raw = await res.text();
     const entries = parseEntries(raw);
-    // Persist to cache
     mkdirSync(CACHE_DIR, { recursive: true });
     writeFileSync(CACHE_PATH, raw, "utf-8");
     return entries;
