@@ -1,5 +1,5 @@
 {
-  "name": "mcp-sentinel",
+  "name": "fabrica-star",
   "version": "0.1.0",
   "description": "Know what you're installing before you npx it. A security scanner for Model Context Protocol (MCP) servers and client configs.",
   "keywords": [
@@ -16,7 +16,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "mcp-sentinel": "dist/cli.js"
+    "fabrica-star": "dist/cli.js"
   },
   "files": [
     "dist",

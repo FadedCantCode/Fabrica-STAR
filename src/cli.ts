@@ -20,7 +20,7 @@ function parseFailOn(value: string): Severity {
 const program = new Command();
 
 program
-  .name("mcp-sentinel")
+  .name("fabrica-star")
   .description("Security scanner for Model Context Protocol (MCP) servers and client configs.")
   .version("0.1.0");
 

@@ -1,9 +1,10 @@
-# STAR (mcp-sentinel)
+# Fabrica-STAR
 
 **Know what you're installing before you `npx` it.**
 
 A lightweight, zero-config security scanner for [Model Context Protocol](https://modelcontextprotocol.io) (MCP) servers — the things Claude Desktop, Claude Code, Cursor, and friends connect to when you give an AI agent tools.
 
+[![CI](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml/badge.svg)](https://github.com/FadedCantCode/Fabrica-STAR/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](package.json)
 
@@ -13,7 +14,7 @@ A lightweight, zero-config security scanner for [Model Context Protocol](https:/
 
 MCP exploded from a niche protocol into the default way AI agents reach external tools — and the ecosystem grew faster than the tooling to vet it. Independent research auditing thousands of public MCP servers has found that a large share ship with no authentication at all and are vulnerable to common issues like SSRF, with only a small minority using OAuth (see [BlueRock Security's 2026 analysis](https://www.mcpbundles.com/blog/best-mcp-servers)). Most of the security tooling that has shown up to address this targets enterprise procurement — SOC 2 audits, SSO, compliance dashboards.
 
-If you're an individual developer who just typed `npx some-mcp-server` into your config, none of that helps you. **STAR (mcp-sentinel) is the five-second gut check for the rest of us:** point it at your config or a server's source, get a plain-English report, move on.
+If you're an individual developer who just typed `npx some-mcp-server` into your config, none of that helps you. **Fabrica-STAR is the five-second gut check for the rest of us:** point it at your config or a server's source, get a plain-English report, move on.
 
 ## What it does
 
@@ -26,22 +27,22 @@ No telemetry, no network calls, no account. It reads files on your disk and prin
 ## Install
 
 ```bash
-npx mcp-sentinel scan
+npx fabrica-star scan
 ```
 
 or install it globally:
 
 ```bash
-npm install -g mcp-sentinel
-mcp-sentinel scan
+npm install -g fabrica-star
+fabrica-star scan
 ```
 
 ## Example
 
 ```
-$ mcp-sentinel scan-config examples/sample-claude-config.json
+$ fabrica-star scan-config examples/sample-claude-config.json
 
-mcp-sentinel scan results
+fabrica-star scan results
 
 ⚠ filesystem [MEDIUM]
    source: examples/sample-claude-config.json
@@ -83,9 +84,9 @@ node dist/cli.js scan-config examples/sample-claude-config.json
 ## CLI reference
 
 ```
-mcp-sentinel scan                  Auto-discover and scan known client configs
-mcp-sentinel scan-config <path>    Scan a specific config file
-mcp-sentinel scan-source <path>    Static-scan a server's source for risky code patterns
+fabrica-star scan                  Auto-discover and scan known client configs
+fabrica-star scan-config <path>    Scan a specific config file
+fabrica-star scan-source <path>    Static-scan a server's source for risky code patterns
 
 Options (all commands):
   --json                Machine-readable output, for piping into other tools
@@ -96,7 +97,7 @@ Options (all commands):
 The non-zero exit code on findings means you can drop it straight into CI:
 
 ```yaml
-- run: npx mcp-sentinel scan-config .mcp.json --fail-on high
+- run: npx fabrica-star scan-config .mcp.json --fail-on high
 ```
 
 ## Severity levels

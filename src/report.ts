@@ -50,7 +50,7 @@ function formatServerBlock(report: ServerReport): string {
 
 export function formatTextReport(result: ScanResult): string {
   const sections: string[] = [];
-  sections.push(`${COLOR.bold}mcp-sentinel scan results${COLOR.reset}`);
+  sections.push(`${COLOR.bold}fabrica-star scan results${COLOR.reset}`);
   sections.push("");
 
   if (result.servers.length === 0 && result.generalFindings.length === 0) {
@@ -91,7 +91,7 @@ export function formatJsonReport(result: ScanResult): string {
 
 export function formatSourceReport(findings: import("./types.js").Finding[], rootDir: string): string {
   const sections: string[] = [];
-  sections.push(`${COLOR.bold}mcp-sentinel source scan: ${rootDir}${COLOR.reset}`);
+  sections.push(`${COLOR.bold}fabrica-star source scan: ${rootDir}${COLOR.reset}`);
   sections.push("");
 
   if (findings.length === 0) {

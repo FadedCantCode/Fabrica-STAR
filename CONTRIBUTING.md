@@ -1,4 +1,4 @@
-# Contributing to STAR
+# Contributing to mcp-sentinel
 
 Thanks for considering a contribution. This project stays useful only if its
 rules and known-bad list are accurate, so the bar for new entries is
@@ -7,8 +7,8 @@ rules and known-bad list are accurate, so the bar for new entries is
 ## Development setup
 
 ```bash
-git clone https://github.com/<your-fork>/Fabrica-STAR.git
-cd Fabrica-STAR
+git clone https://github.com/<your-fork>/mcp-sentinel.git
+cd mcp-sentinel
 npm install
 npm run build
 npm test
@@ -16,8 +16,6 @@ npm test
 
 Use `npm run dev -- scan` to run the CLI directly from source via `tsx`,
 without building first.
-
-This runs the STAR CLI directly without publishing/installing the package.
 
 ## Adding a config or source rule
 
@@ -61,23 +59,3 @@ toward over-flagging, but real false positives are still bugs.
   `validate` or `process`).
 - No new runtime dependencies without discussion in an issue first — part of
   this tool's value is that it has a tiny, auditable dependency tree.
-
-## Security philosophy
-
-STAR does not decide whether an MCP server is "safe".
-It surfaces signals that help developers make informed decisions.
-
-Rules should answer:
-- What permission does this server request?
-- What data can it access?
-- What actions can it perform?
-- Why should this finding matter?
-
-Avoid rules based on reputation or assumptions.
-STAR reports security signals, not absolute verdicts.
-
-The goal is to help developers understand what an MCP server can access
-and what risks it introduces before trusting it.
-
-Prefer evidence-backed findings over assumptions.
-
