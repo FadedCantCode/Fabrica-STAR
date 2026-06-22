@@ -7,8 +7,8 @@ rules and known-bad list are accurate, so the bar for new entries is
 ## Development setup
 
 ```bash
-git clone https://github.com/<your-fork>/mcp-sentinel.git
-cd mcp-sentinel
+git clone https://github.com/<your-fork>/Fabrica-STAR.git
+cd Fabrica-STAR
 npm install
 npm run build
 npm test
@@ -16,6 +16,8 @@ npm test
 
 Use `npm run dev -- scan` to run the CLI directly from source via `tsx`,
 without building first.
+
+This runs the STAR CLI directly without publishing/installing the package.
 
 ## Adding a config or source rule
 
