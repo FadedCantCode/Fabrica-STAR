@@ -13,7 +13,7 @@ A lightweight, zero-config security scanner for [Model Context Protocol](https:/
 
 MCP exploded from a niche protocol into the default way AI agents reach external tools — and the ecosystem grew faster than the tooling to vet it. Independent research auditing thousands of public MCP servers has found that a large share ship with no authentication at all and are vulnerable to common issues like SSRF, with only a small minority using OAuth (see [BlueRock Security's 2026 analysis](https://www.mcpbundles.com/blog/best-mcp-servers)). Most of the security tooling that has shown up to address this targets enterprise procurement — SOC 2 audits, SSO, compliance dashboards.
 
-If you're an individual developer who just typed `npx some-mcp-server` into your config, none of that helps you. **mcp-sentinel is the five-second gut check for the rest of us:** point it at your config or a server's source, get a plain-English report, move on.
+If you're an individual developer who just typed `npx some-mcp-server` into your config, none of that helps you. **STAR (mcp-sentinel) is the five-second gut check for the rest of us:** point it at your config or a server's source, get a plain-English report, move on.
 
 ## What it does
 
