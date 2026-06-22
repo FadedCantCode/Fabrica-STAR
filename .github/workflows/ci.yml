@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - run: npm ci
+      - run: npm install
       - run: npm run build
       - run: npm test
       - name: Dogfood
@@ -39,7 +39,7 @@ jobs:
           node-version: 22.x
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
-      - run: npm ci
+      - run: npm install
       - run: npm run build
       - run: npm publish --provenance
         env:
