@@ -1,0 +1,14 @@
+{
+  "$schema": "./known-flagged-servers.schema.json",
+  "version": 1,
+  "updated": "2026-06-21",
+  "_comment": "Community-maintained list of MCP server identifiers with documented security issues. Add entries via PR with a 'reason' linking to a public advisory, issue, or writeup. Do not add entries based on speculation.",
+  "entries": [
+    {
+      "match": "example-flagged-server",
+      "matchType": "name",
+      "severity": "critical",
+      "reason": "Placeholder entry. Replace with real, sourced entries via PR. See CONTRIBUTING.md."
+    }
+  ]
+}
