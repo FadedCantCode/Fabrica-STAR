@@ -113,7 +113,7 @@ Or use the official GitHub Action:
 
 ```yaml
 - name: Scan MCP servers
-  uses: FadedCantCode/Fabrica-STAR@v0.1.4
+  uses: FadedCantCode/Fabrica-STAR@v0.1.5
   with:
     config-path: .mcp.json
     fail-on: high
