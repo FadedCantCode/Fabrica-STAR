@@ -7,6 +7,7 @@ export { analyzeCompoundBlastRadius } from "./rules/compoundBlastRadius.js";
 export { checkOsvVulnerabilities } from "./rules/osvCheck.js";
 export { checkProvenance } from "./rules/provenanceCheck.js";
 export { checkMaintainerTrust } from "./rules/maintainerTrust.js";
+export { checkToolPin, pinAllServers, listPins, clearPin } from "./rules/toolPinning.js";
 export { rollUpSeverity, isAtLeast } from "./scorer.js";
 export { formatTextReport, formatJsonReport, formatSourceReport, formatPermissionPromptReport } from "./report.js";
 export { formatSarifReport } from "./sarif.js";

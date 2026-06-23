@@ -10,6 +10,7 @@ import { formatTextReport, formatJsonReport, formatSourceReport, formatPermissio
 import { formatSarifReport } from "./sarif.js";
 import { isAtLeast, rollUpSeverity } from "./scorer.js";
 import { loadPolicy } from "./policy.js";
+import { pinAllServers, listPins, clearPin } from "./rules/toolPinning.js";
 import type { Severity } from "./types.js";
 
 const REPO = "FadedCantCode/Fabrica-STAR";
@@ -202,6 +203,48 @@ program
     ].join("\n");
     writeFileSync(policyPath, content, "utf-8");
     console.log(`✔ Created .fabrica-star.yml — commit this to share policy with your team.`);
+  });
+
+
+// ── pin ───────────────────────────────────────────────────────────────────
+program
+  .command("pin")
+  .description("Record the current shasum of all configured MCP packages. Future scans will alert if any package changes without a version bump (rug pull detection).")
+  .option("--list", "List all pinned packages")
+  .option("--clear <pkg@version>", "Remove a specific pin")
+  .action(async (opts: { list?: boolean; clear?: string }) => {
+    if (opts.list) {
+      const pins = listPins();
+      if (pins.length === 0) {
+        console.log("No packages pinned yet. Run: fabrica-star pin");
+        return;
+      }
+      console.log(`\n${pins.length} pinned package${pins.length === 1 ? "" : "s"}:\n`);
+      for (const p of pins) {
+        console.log(`  ${p.name}@${p.version}`);
+        console.log(`    shasum:   ${p.shasum.slice(0, 32)}...`);
+        console.log(`    pinned:   ${p.pinnedAt.slice(0, 10)}\n`);
+      }
+      return;
+    }
+    if (opts.clear) {
+      const removed = clearPin(opts.clear);
+      console.log(removed ? `✔ Removed pin for ${opts.clear}` : `No pin found for ${opts.clear}`);
+      return;
+    }
+    // Pin all servers in discovered configs
+    console.log("\nDiscovering MCP configs...\n");
+    const files = discoverConfigFiles();
+    if (files.length === 0) {
+      console.log("No MCP config files found.");
+      return;
+    }
+    const { parseConfigFile } = await import("./configParser.js");
+    const servers = files.flatMap((f) => {
+      try { return parseConfigFile(f); } catch { return []; }
+    });
+    console.log(`Found ${servers.length} server${servers.length === 1 ? "" : "s"} across ${files.length} config file${files.length === 1 ? "" : "s"}.\n`);
+    await pinAllServers(servers);
   });
 
 program.parseAsync();
