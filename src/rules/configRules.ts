@@ -1,5 +1,11 @@
 import type { Finding, McpServerEntry } from "../types.js";
 import { loadKnownBadList } from "../knownBad.js";
+import { checkNpmHeuristics } from "./npmHeuristics.js";
+import { checkBlastRadius } from "./blastRadius.js";
+import { checkOsvVulnerabilities } from "./osvCheck.js";
+import { checkProvenance } from "./provenanceCheck.js";
+import { checkMaintainerTrust } from "./maintainerTrust.js";
+import { checkToolPin } from "./toolPinning.js";
 
 const NPM_RUNNERS = new Set(["npx", "bunx", "pnpm"]);
 const PYTHON_RUNNERS = new Set(["uvx", "pipx"]);
@@ -135,13 +141,6 @@ export async function runConfigRules(server: McpServerEntry): Promise<Finding[]>
     ...checkInsecureTransport(server),
     ...checkUnscopedFilesystemAccess(server),
   ];
-
-  const { checkNpmHeuristics } = await import("./npmHeuristics.js");
-  const { checkBlastRadius } = await import("./blastRadius.js");
-  const { checkOsvVulnerabilities } = await import("./osvCheck.js");
-  const { checkProvenance } = await import("./provenanceCheck.js");
-  const { checkMaintainerTrust } = await import("./maintainerTrust.js");
-  const { checkToolPin } = await import("./toolPinning.js");
 
   const [flaggedFindings, npmFindings, blastFindings, osvFindings, provenanceFindings, maintainerFindings, pinFindings] = await Promise.all([
     checkKnownFlagged(server),

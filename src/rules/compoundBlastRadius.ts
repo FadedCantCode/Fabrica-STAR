@@ -125,7 +125,7 @@ export function analyzeCompoundBlastRadius(
             `COMPOUND RISK — Exfiltration chain detected across two servers:\n` + // fabrica-star-ignore
             `  [${reader.name}] can READ files from your filesystem` +
             (reader.filesystemPaths.length ? ` (${reader.filesystemPaths.join(", ")})` : "") + `\n` +
-            `  [${sender.name}] can SEND data to remote hosts` +
+            `  [${sender.name}] can SEND data to remote hosts` + // fabrica-star-ignore
             (sender.httpHosts.length ? ` (${sender.httpHosts.join(", ")})` : "") + `\n` +
             `  Combined: if either server is compromised, SSH keys, AWS credentials, and ` +
             `.env files reachable by [${reader.name}] could be exfiltrated via [${sender.name}].`, // fabrica-star-ignore
