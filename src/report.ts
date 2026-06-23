@@ -140,10 +140,10 @@ function buildPermissions(server: import("./types.js").ServerReport): Permission
     } else if (f.ruleId === "unscoped-filesystem-access") {
       entries.push({ capability: "WRITE", detail: "full filesystem write access (root path configured)", severity: f.severity });
     } else if (f.ruleId === "insecure-transport" || f.ruleId === "insecure-transport-local") {
-      const urlMatch = f.message.match(/\(([^)]+)\)/);
+      const urlMatch = f.message.match(/\(([^)]{1,500})\)/);
       entries.push({ capability: "NETWORK", detail: urlMatch ? urlMatch[1] : "remote host", severity: f.severity });
     } else if (f.ruleId === "hardcoded-secret") {
-      const keyMatch = f.message.match(/env var "([^"]+)"/);
+      const keyMatch = f.message.match(/env var "([^"]{1,200})"/);
       entries.push({ capability: "EXPOSE", detail: keyMatch ? `${keyMatch[1]} (hardcoded credential)` : "hardcoded credential", severity: f.severity });
     } else if (f.ruleId === "osv-vulnerability") {
       entries.push({ capability: "CVE", detail: f.message.split(".")[0], severity: f.severity });
