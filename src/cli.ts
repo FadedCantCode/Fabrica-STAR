@@ -52,7 +52,7 @@ const program = new Command();
 program
   .name("fabrica-star")
   .description("Security scanner for Model Context Protocol (MCP) servers and client configs.")
-  .version("0.1.4");
+  .version("0.1.6");
 
 // ── scan ──────────────────────────────────────────────────────────────────
 program
