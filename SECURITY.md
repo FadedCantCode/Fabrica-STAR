@@ -5,7 +5,7 @@ We currently provide security updates for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1.7   | :white_check_mark: |
+| 0.1.8   | :white_check_mark: |
 
 ### 🟢 Not a Vulnerability (Report via Public Issue)
 Fabrica-STAR relies on pattern matching and heuristics rather than formal auditing. The following scenarios are considered **rule improvements or bugs**, not security vulnerabilities:
