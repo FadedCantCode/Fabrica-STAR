@@ -139,13 +139,17 @@ export async function runConfigRules(server: McpServerEntry): Promise<Finding[]>
   const { checkNpmHeuristics } = await import("./npmHeuristics.js");
   const { checkBlastRadius } = await import("./blastRadius.js");
   const { checkOsvVulnerabilities } = await import("./osvCheck.js");
+  const { checkProvenance } = await import("./provenanceCheck.js");
+  const { checkMaintainerTrust } = await import("./maintainerTrust.js");
 
-  const [flaggedFindings, npmFindings, blastFindings, osvFindings] = await Promise.all([
+  const [flaggedFindings, npmFindings, blastFindings, osvFindings, provenanceFindings, maintainerFindings] = await Promise.all([
     checkKnownFlagged(server),
     checkNpmHeuristics(server),
     Promise.resolve(checkBlastRadius(server)),
     checkOsvVulnerabilities(server),
+    checkProvenance(server),
+    checkMaintainerTrust(server),
   ]);
 
-  return [...syncFindings, ...flaggedFindings, ...npmFindings, ...blastFindings, ...osvFindings];
+  return [...syncFindings, ...flaggedFindings, ...npmFindings, ...blastFindings, ...osvFindings, ...provenanceFindings, ...maintainerFindings];
 }
