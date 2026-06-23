@@ -164,6 +164,37 @@ fabrica-star pin --clear some-mcp@1.2.3
 
 ---
 
+## Watch mode
+
+```bash
+fabrica-star watch
+```
+
+Monitors all discovered MCP config files in real time. On every save, shows exactly what changed:
+
+```
+08:59:36  fabrica-star watch — monitoring 2 config files
+          claude_desktop_config.json, .mcp.json
+
+Initial scan: 4 servers · 1 critical · 2 high · 1 clean
+
+Watching for changes. Press Ctrl+C to stop.
+
+── Config changed: claude_desktop_config.json ──────────────
+
+✖ NEW SERVER  evil-mcp  [critical]
+   [known-flagged-server]  matches known-malicious list
+   [hardcoded-secret]  OPENAI_KEY contains a literal credential
+
+⚠ CHANGED  github
+   + hardcoded-secret
+   − no-version-pin
+```
+
+Detects new servers the moment they are added, shows new and resolved findings as a diff, and handles editor temp-file swaps gracefully. Use `--offline` to skip network checks on each rescan.
+
+---
+
 ## Source scanning
 
 ```bash
@@ -195,7 +226,7 @@ Official GitHub Action:
 
 ```yaml
 - name: Scan MCP servers
-  uses: FadedCantCode/Fabrica-STAR@v0.1.6
+  uses: FadedCantCode/Fabrica-STAR@v0.1.7
   with:
     config-path: .mcp.json
     fail-on: high
@@ -231,6 +262,7 @@ fabrica-star scan                       Auto-discover configs across 9 IDEs
                                          Windsurf, Zed, Warp, Cline, Roo)
 fabrica-star scan-config <path>         Scan a specific config file
 fabrica-star scan-source <path>         Static-scan server source code
+fabrica-star watch                      Continuously monitor config files for changes
 fabrica-star pin                        Record package shasums for rug pull detection
 fabrica-star pin --list                 List all pinned packages
 fabrica-star pin --clear <pkg@version>  Remove a specific pin
