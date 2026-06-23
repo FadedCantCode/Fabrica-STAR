@@ -91,12 +91,16 @@ fabrica-star scan                       Auto-discover and scan known client conf
 fabrica-star scan-config <path>         Scan a specific config file
 fabrica-star scan-source <path>         Static-scan a server's source for risky code patterns
 fabrica-star report <server-or-pkg>     Open a pre-filled GitHub issue to flag a suspicious server
+fabrica-star install-hook               Install a git pre-commit hook
+fabrica-star init                       Create a starter .fabrica-star.yml policy file
 
 Options (scan commands):
-  --json                Machine-readable output, for piping into other tools
-  --offline             Skip remote known-bad list fetch and npm registry checks
+  --format <format>     Output format: text, json, sarif, permissions (default: text)
+  --json                Shorthand for --format json
+  --offline             Skip remote known-bad list fetch, OSV audit, and npm registry checks
   --fail-on <severity>  Exit non-zero at or above this severity (default: high)
                          One of: info, low, medium, high, critical
+  --no-policy           Ignore .fabrica-star.yml policy file
 ```
 
 The non-zero exit code on findings means you can drop it straight into CI:
@@ -109,7 +113,7 @@ Or use the official GitHub Action:
 
 ```yaml
 - name: Scan MCP servers
-  uses: FadedCantCode/Fabrica-STAR@v0.1.0
+  uses: FadedCantCode/Fabrica-STAR@v0.1.4
   with:
     config-path: .mcp.json
     fail-on: high
