@@ -11,6 +11,7 @@ import { formatSarifReport } from "./sarif.js";
 import { isAtLeast, rollUpSeverity } from "./scorer.js";
 import { loadPolicy } from "./policy.js";
 import { pinAllServers, listPins, clearPin } from "./rules/toolPinning.js";
+import { startWatch } from "./watch.js";
 import type { Severity } from "./types.js";
 
 const REPO = "FadedCantCode/Fabrica-STAR";
@@ -52,7 +53,7 @@ const program = new Command();
 program
   .name("fabrica-star")
   .description("Security scanner for Model Context Protocol (MCP) servers and client configs.")
-  .version("0.1.6");
+  .version("0.1.7");
 
 // ── scan ──────────────────────────────────────────────────────────────────
 program
@@ -205,6 +206,17 @@ program
     console.log(`✔ Created .fabrica-star.yml — commit this to share policy with your team.`);
   });
 
+
+
+// ── watch ─────────────────────────────────────────────────────────────────
+program
+  .command("watch")
+  .description("Continuously monitor MCP config files for changes. Re-scans on every save and shows exactly what changed — new servers, new findings, or resolved issues.")
+  .option("--offline", "skip network checks on re-scan")
+  .option("--fail-on <severity>", "exit non-zero if any finding is at or above this severity", parseFailOn, "high" as Severity)
+  .action(async (opts: { offline?: boolean; failOn: Severity }) => {
+    await startWatch({ offline: opts.offline, failOn: opts.failOn });
+  });
 
 // ── pin ───────────────────────────────────────────────────────────────────
 program

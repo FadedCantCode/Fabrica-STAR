@@ -12,4 +12,5 @@ export { rollUpSeverity, isAtLeast } from "./scorer.js";
 export { formatTextReport, formatJsonReport, formatSourceReport, formatPermissionPromptReport } from "./report.js";
 export { formatSarifReport } from "./sarif.js";
 export { loadPolicy } from "./policy.js";
+export { startWatch } from "./watch.js";
 export * from "./types.js";
