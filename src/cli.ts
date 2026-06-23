@@ -12,11 +12,12 @@ import { isAtLeast, rollUpSeverity } from "./scorer.js";
 import { loadPolicy } from "./policy.js";
 import { pinAllServers, listPins, clearPin } from "./rules/toolPinning.js";
 import { startWatch } from "./watch.js";
+import { generateHtmlReport, calculateScore } from "./htmlReport.js";
 import type { Severity } from "./types.js";
 
 const REPO = "FadedCantCode/Fabrica-STAR";
 const VALID_SEVERITIES: Severity[] = ["info", "low", "medium", "high", "critical"];
-const VALID_FORMATS = ["text", "json", "sarif", "permissions"] as const;
+const VALID_FORMATS = ["text", "json", "sarif", "permissions", "html"] as const;
 type OutputFormat = typeof VALID_FORMATS[number];
 
 function parseFailOn(value: string): Severity {
@@ -45,6 +46,7 @@ function formatOutput(result: import("./types.js").ScanResult, fmt: OutputFormat
   if (fmt === "sarif") return formatSarifReport(result);
   if (fmt === "json") return formatJsonReport(result);
   if (fmt === "permissions") return formatPermissionPromptReport(result);
+  if (fmt === "html") return generateHtmlReport(result);
   return formatTextReport(result);
 }
 

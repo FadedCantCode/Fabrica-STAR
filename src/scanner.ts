@@ -1,19 +1,28 @@
+import { readFileSync } from "node:fs";
 import type { Finding, ScanResult, ServerReport } from "./types.js";
 import { parseConfigFile } from "./configParser.js";
 import { runConfigRules } from "./rules/configRules.js";
 import { analyzeCompoundBlastRadius } from "./rules/compoundBlastRadius.js";
+import { checkRootConfig } from "./rules/rootConfigChecks.js";
 import { rollUpSeverity } from "./scorer.js";
 
-/**
- * Scans a list of MCP client config files and returns a full report.
- * Network calls run concurrently to keep latency low.
- * After per-server analysis, runs cross-server compound blast radius analysis.
- */
 export async function scanConfigFiles(filePaths: string[]): Promise<ScanResult> {
   const servers: ServerReport[] = [];
   const generalFindings: Finding[] = [];
 
   for (const filePath of filePaths) {
+    // Parse raw JSON for root-level checks (hooks, trust flags, etc.)
+    let rawConfig: unknown = null;
+    try {
+      rawConfig = JSON.parse(readFileSync(filePath, "utf-8"));
+    } catch { /* handled below */ }
+
+    // Root-level config checks (enableAllProjectMcpServers, hooks, trust flags)
+    if (rawConfig !== null) {
+      generalFindings.push(...checkRootConfig(rawConfig, filePath));
+    }
+
+    // Per-server checks
     let entries;
     try {
       entries = parseConfigFile(filePath);
@@ -27,7 +36,6 @@ export async function scanConfigFiles(filePaths: string[]): Promise<ScanResult> 
       continue;
     }
 
-    // Run all per-server checks concurrently
     const results = await Promise.all(
       entries.map(async (server) => {
         const findings = await runConfigRules(server);
@@ -42,7 +50,6 @@ export async function scanConfigFiles(filePaths: string[]): Promise<ScanResult> 
     servers.push(...results);
 
     // Cross-server compound blast radius analysis
-    // Runs after all individual server results are available
     const compoundFindings = analyzeCompoundBlastRadius(entries, results);
     if (compoundFindings.length > 0) {
       generalFindings.push(...compoundFindings);
