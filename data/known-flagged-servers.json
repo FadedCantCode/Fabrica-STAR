@@ -1,25 +1,127 @@
 {
-  "version": 1,
-  "updated": "2026-06-22",
-  "_comment": "Community-maintained list of MCP server identifiers with documented security issues. Add entries via PR with a 'reason' linking to a public advisory, issue, or writeup. Do not add entries based on speculation.",
+  "version": 2,
+  "updated": "2026-06-23",
+  "source": "https://github.com/FadedCantCode/Fabrica-STAR/blob/main/data/known-flagged-servers.json",
   "entries": [
+    {
+      "match": "example-flagged-server",
+      "matchType": "name",
+      "severity": "critical",
+      "reason": "Example entry for testing. Not a real server."
+    },
     {
       "match": "postmark-mcp",
       "matchType": "name",
       "severity": "critical",
-      "reason": "First confirmed in-the-wild malicious MCP server — a supply chain backdoor that exfiltrated email data from approximately 300 organizations before discovery. Disclosed by Koi Security, September 2025. Remove immediately if present. See: https://dev.to/piiiico/mcp-security-vulnerabilities-in-2026-40-cves-and-counting-4pco"
+      "reason": "CVE: Backdoor in v1.0.16 silently BCCs all outgoing emails to phan@giftshop.club. Supply chain attack via compromised npm publisher. Source: qualys.com/2025/09/30/malicious-mcp-server-on-npm-postmark-mcp"
     },
     {
       "match": "mcp-remote",
       "matchType": "name",
-      "severity": "high",
-      "reason": "CVE-2025-6514 (CVSS 9.6) — authentication bypass allowed unauthenticated remote code execution. Affected 437,000+ downloads. Pin to a patched version and verify your version is not vulnerable before use. See: https://agent-wars.com/news/2026-03-13-mcp-security-2026-30-cves-in-60-days-what-went-wrong"
+      "severity": "critical",
+      "reason": "CVE-2025-6514 (CVSS 9.6): Versions 0.0.5–0.1.15 allow full remote code execution on the client OS when connecting to a malicious MCP server via crafted authorization_endpoint. 437,000+ downloads affected. Source: jfrog.com/blog/2025-6514"
     },
     {
       "match": "@akoskm/create-mcp-server-stdio",
       "matchType": "name",
+      "severity": "critical",
+      "reason": "CVE-2025-54994: Uses unsafe exec() that concatenates unsanitized user input into shell commands, enabling arbitrary command execution. Source: github.com/advisories/GHSA-3ch2-jxxc-v4xf"
+    },
+    {
+      "match": "gemini-mcp-tool",
+      "matchType": "name",
+      "severity": "critical",
+      "reason": "CVE-2026-0755 (CVSS 9.8): Unsanitized user input passed to execAsync shell commands. Network-exploitable with no authentication required. Zero-day at time of disclosure. Source: sentinelone.com/vulnerability-database/cve-2026-0755"
+    },
+    {
+      "match": "@mcpjam/inspector",
+      "matchType": "name",
+      "severity": "critical",
+      "reason": "CVE-2026-23744 (CVSS 9.8): Listens on 0.0.0.0 by default with no authentication. A crafted HTTP request can install an MCP server and execute arbitrary code. No user interaction required. Source: advisories.gitlab.com"
+    },
+    {
+      "match": "mcp-server-kubernetes",
+      "matchType": "name",
       "severity": "high",
-      "reason": "CVE-2025-54994 — command injection vulnerability in stdio transport handling. See: https://thehackernews.com/2026/04/anthropic-mcp-design-vulnerability.html"
+      "reason": "CVE-2025-53355 (CVSS 7.5): Unsanitized input in execSync calls in kubectl_scale, kubectl_patch, and explain_resource tools. Shell metacharacters allow arbitrary command execution. Affects versions <= 2.4.9. Source: github.com/advisories/GHSA-gjv4-ghm7-q58q"
+    },
+    {
+      "match": "node-code-sandbox-mcp",
+      "matchType": "name",
+      "severity": "high",
+      "reason": "CVE-2025-53372 (CVSS 7.5): Command injection vulnerabilities bypass Docker sandbox protections via unsanitized execSync calls. Exploitable through indirect prompt injection. Affects versions <= 1.2.0. Source: advisories.gitlab.com"
+    },
+    {
+      "match": "mcp-fetch-server",
+      "matchType": "name",
+      "severity": "critical",
+      "reason": "CVE-2025-65513 (CVSS 9.3): is_ip_private() fails to properly validate private IP addresses, allowing SSRF attacks that reach internal network services. Affects versions <= 1.0.2. Source: security.snyk.io/vuln/SNYK-JS-MCPFETCHSERVER-14287685"
+    },
+    {
+      "match": "filesystem-mcp",
+      "matchType": "name",
+      "severity": "high",
+      "reason": "CVE-2025-67366: Path traversal vulnerability allows escaping configured directory boundaries to read or write arbitrary files on the host system. Source: sentinelone.com/vulnerability-database/cve-2025-67366"
+    },
+    {
+      "match": "zen-mcp-server",
+      "matchType": "name",
+      "severity": "high",
+      "reason": "CVE-2025-66689 (CVSS up to 9.8): is_dangerous_path() uses exact string matching, trivially bypassed via subdirectory traversal (e.g., /etc/shadow/../../../home/.ssh/). Enables reading arbitrary files including SSH keys. Source: sentinelone.com/vulnerability-database/cve-2025-66689"
+    },
+    {
+      "match": "github-kanban",
+      "matchType": "name",
+      "severity": "critical",
+      "reason": "CVE-2026-0756: Remote code execution via the MCP tool interface. Allows arbitrary command execution without authentication. Source: sentinelone.com/vulnerability-database/cve-2026-0756"
+    },
+    {
+      "match": "framelink-figma-mcp",
+      "matchType": "name",
+      "severity": "high",
+      "reason": "CVE-2025-53967 (CVSS 8.0): Command injection in fetch-with-retry.ts — when standard fetch fails, falls back to curl via child_process.exec without sanitizing the URL. 600,000+ downloads, 10,000+ GitHub stars. Source: imperva.com/blog"
+    },
+    {
+      "match": "@modelcontextprotocol/inspector",
+      "matchType": "name",
+      "severity": "critical",
+      "reason": "CVE-2025-49596 (CVSS 9.4): Lack of authentication between Inspector client and proxy enables remote code execution. Chainable with DNS rebinding. Affects versions below 0.14.1. Source: oligo.security/blog/cve-2025-49596"
+    },
+    {
+      "match": "oura-mcp",
+      "matchType": "name",
+      "severity": "critical",
+      "reason": "Trojanized clone: SmartLoader hackers distributed a malicious version of the legitimate Oura Ring MCP project via public MCP registries. Contains credential harvesting malware. Feb 2026. Source: authzed.com/blog/timeline-mcp-breaches"
+    },
+    {
+      "match": "nginx-ui",
+      "matchType": "name",
+      "severity": "critical",
+      "reason": "CVE-2026-33032 (CVSS 9.8): MCP message endpoint fails to authenticate command execution requests. Attackers bypass auth to restart server or modify configs. 2,600+ publicly exposed instances affected. Source: authzed.com/blog/timeline-mcp-breaches"
+    },
+    {
+      "match": "neo4j-contrib/mcp-neo4j",
+      "matchType": "url-contains",
+      "severity": "high",
+      "reason": "CVE (GHSA-vcqx-v2mg-7chx, CVSS 7.4): DNS rebinding vulnerability bypasses Same-Origin Policy, enabling unauthorized tool invocations and complete database takeover of locally running Neo4j instances. Affects versions 0.2.2–0.3.1. Source: github.com/neo4j-contrib/mcp-neo4j/security"
+    },
+    {
+      "match": "markitdown-mcp",
+      "matchType": "name",
+      "severity": "high",
+      "reason": "Unpatched SSRF: Microsoft MarkItDown MCP server fetches arbitrary URLs without validation, enabling access to AWS EC2 instance metadata credentials. Microsoft classified as low-risk despite demonstrated impact. Source: ctrlaltnod.com/news/critical-flaws-in-microsoft-anthropic-mcp-servers"
+    },
+    {
+      "match": "thirdweb-mcp",
+      "matchType": "name",
+      "severity": "high",
+      "reason": "Unauthorized cryptocurrency transactions: Attackers can exploit the thirdweb MCP server to initiate transactions from connected wallets without proper authorization. Source: mcpsec.dev/advisories/2025-09-03-thirdweb-mcp-unauthorized-transactions"
+    },
+    {
+      "match": "grafana-mcp",
+      "matchType": "name",
+      "severity": "high",
+      "reason": "Unauthenticated SSE interface: Binds to 0.0.0.0:8000 by default, exposing an unauthenticated endpoint on all network interfaces. Attackers can create, update, and delete Grafana dashboards remotely without credentials. Source: mcpsec.dev/advisories/2025-09-02-grafana-mcp-unauthenticated-sse-access"
     }
   ]
 }
