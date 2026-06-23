@@ -52,7 +52,7 @@ function extractPkgAndVersion(server: McpServerEntry): { name: string; version: 
   }
 
   // Python: pkg==version or pkg>=version etc.
-  const pyMatch = pkgArg.match(/^([A-Za-z0-9_.-]+)[=!<>~]+(.+)$/);
+  const pyMatch = pkgArg.match(/^([A-Za-z0-9_.-]{1,200})[=!<>~]+([^\s]{1,200})$/);
   if (pyMatch) return { name: pyMatch[1], version: pyMatch[2] };
   return { name: pkgArg, version: null };
 }

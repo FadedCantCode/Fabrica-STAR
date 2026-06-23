@@ -82,7 +82,7 @@ function isValidNpmPackageName(pkg: string): boolean {
 async function fetchNpmMeta(pkg: string): Promise<NpmMeta | null> {
   if (!isValidNpmPackageName(pkg)) return null; // refuse to build URLs from invalid names
   try {
-    const encoded = pkg.startsWith("@") ? pkg.replace("/", "%2F") : pkg;
+    const encoded = pkg.startsWith("@") ? "@" + encodeURIComponent(pkg.slice(1)) : encodeURIComponent(pkg);
     const res = await fetch(`${REGISTRY_URL}/${encoded}`, { // fabrica-star-ignore — host is a hardcoded constant
       signal: AbortSignal.timeout(5000),
     });
