@@ -12,19 +12,20 @@ export interface SourcePattern {
 // false positives on cleverly-written code. Findings are signals to review,
 // not proof of a vulnerability.
 export const SOURCE_PATTERNS: SourcePattern[] = [
+  // ── JavaScript / TypeScript dangerous code patterns ──────────────────────
   {
     id: "js-eval",
     severity: "high",
     extensions: ["js", "ts", "jsx", "tsx", "mjs", "cjs"],
-    regex: /\beval\s*\(/,
-    message: "eval() executes arbitrary strings as code. If any part of the input can reach this, it's a code-injection path.",
+    regex: /\beval\s*\(/, // fabrica-star-ignore
+    message: "eval() executes arbitrary strings as code. If any part of the input can reach this, it's a code-injection path.", // fabrica-star-ignore
   },
   {
     id: "js-new-function",
     severity: "high",
     extensions: ["js", "ts", "jsx", "tsx", "mjs", "cjs"],
-    regex: /new\s+Function\s*\(/,
-    message: "new Function() compiles a string into executable code, same risk class as eval().",
+    regex: /new\s+Function\s*\(/, // fabrica-star-ignore
+    message: "new Function() compiles a string into executable code, same risk class as eval().", // fabrica-star-ignore
   },
   {
     id: "js-exec-shell-string",
@@ -47,6 +48,8 @@ export const SOURCE_PATTERNS: SourcePattern[] = [
     regex: /\bfetch\s*\(\s*[`][^`]*\$\{/,
     message: "fetch() called with an interpolated URL. If any part of that URL is attacker- or model-controlled, this is a potential SSRF path — verify the value is constrained to an expected host.",
   },
+
+  // ── Python dangerous patterns ─────────────────────────────────────────────
   {
     id: "py-os-system",
     severity: "high",
@@ -61,10 +64,46 @@ export const SOURCE_PATTERNS: SourcePattern[] = [
     regex: /shell\s*=\s*True/,
     message: "subprocess call with shell=True interprets the command through the shell, risking injection if any part is dynamically built.",
   },
+
+  // ── Hardcoded credentials ─────────────────────────────────────────────────
   {
     id: "hardcoded-api-key",
     severity: "critical",
     regex: /(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|AKIA[A-Z0-9]{16})/,
     message: "Looks like a literal API key/credential committed in source rather than read from the environment.",
+  },
+
+  // ── Prompt injection & tool poisoning ────────────────────────────────────
+  // These detect strings commonly found in malicious MCP server source code
+  // or tool descriptions that attempt to hijack LLM behavior.
+  {
+    id: "prompt-injection-ignore",
+    severity: "critical",
+    regex: /ignore\s+(previous|all\s+previous|prior|earlier)\s+(instructions?|context|prompts?)/i,
+    message: "Possible prompt injection: 'ignore previous instructions' pattern detected. This is a classic injection string used to hijack LLM behavior.", // fabrica-star-ignore
+  },
+  {
+    id: "prompt-injection-override",
+    severity: "critical",
+    regex: /disregard\s+(your|all|any)\s+(previous|prior|earlier|system|instructions?)/i,
+    message: "Possible prompt injection: instruction override pattern detected in source.",
+  },
+  {
+    id: "tool-poisoning-must-call",
+    severity: "high",
+    regex: /you\s+(must|shall|have\s+to)\s+(always\s+)?(first\s+)?(call|invoke|use|run)\s+(this|the)/i,
+    message: "Possible tool poisoning: coercive 'you must call this' pattern in tool description or source. Malicious servers use this to force tool invocations.", // fabrica-star-ignore
+  },
+  {
+    id: "prompt-injection-system-delimiter",
+    severity: "high",
+    regex: /\[SYSTEM\]|<system>|###\s*system\s*###/i, // fabrica-star-ignore
+    message: "Possible prompt injection: fake system prompt delimiter detected. Attackers use these to inject instructions into LLM context.",
+  },
+  {
+    id: "exfiltration-pattern", // fabrica-star-ignore
+    severity: "critical",
+    regex: /\b(exfiltrat|send\s+.{0,30}\s+to\s+remote|upload\s+.{0,30}\s+(secret|key|credential|token))/i, // fabrica-star-ignore
+    message: "Possible data exfiltration pattern detected. Review carefully before running this server.", // fabrica-star-ignore
   },
 ];

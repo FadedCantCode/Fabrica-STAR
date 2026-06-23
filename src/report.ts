@@ -123,3 +123,65 @@ export function formatSourceReport(findings: import("./types.js").Finding[], roo
 
   return sections.join("\n");
 }
+
+// ── Permission Prompt format ───────────────────────────────────────────────
+
+interface PermissionEntry {
+  capability: string;
+  detail: string;
+  severity: Severity;
+}
+
+function buildPermissions(server: import("./types.js").ServerReport): PermissionEntry[] {
+  const entries: PermissionEntry[] = [];
+  for (const f of server.findings) {
+    if (f.ruleId === "blast-radius-sensitive-files") {
+      entries.push({ capability: "READ", detail: f.message.split("\n")[0].replace("This server has access to", "").trim(), severity: f.severity });
+    } else if (f.ruleId === "unscoped-filesystem-access") {
+      entries.push({ capability: "WRITE", detail: "full filesystem write access (root path configured)", severity: f.severity });
+    } else if (f.ruleId === "insecure-transport" || f.ruleId === "insecure-transport-local") {
+      const urlMatch = f.message.match(/\(([^)]+)\)/);
+      entries.push({ capability: "NETWORK", detail: urlMatch ? urlMatch[1] : "remote host", severity: f.severity });
+    } else if (f.ruleId === "hardcoded-secret") {
+      const keyMatch = f.message.match(/env var "([^"]+)"/);
+      entries.push({ capability: "EXPOSE", detail: keyMatch ? `${keyMatch[1]} (hardcoded credential)` : "hardcoded credential", severity: f.severity });
+    } else if (f.ruleId === "osv-vulnerability") {
+      entries.push({ capability: "CVE", detail: f.message.split(".")[0], severity: f.severity });
+    } else if (f.ruleId === "known-flagged-server") {
+      entries.push({ capability: "FLAGGED", detail: "matches known-malicious server list", severity: "critical" as Severity });
+    } else if (f.ruleId === "prompt-injection-ignore" || f.ruleId === "prompt-injection-override" || f.ruleId === "tool-poisoning-must-call") {
+      entries.push({ capability: "HIJACK", detail: "prompt injection pattern detected in source", severity: f.severity });
+    }
+  }
+  return entries;
+}
+
+export function formatPermissionPromptReport(result: import("./types.js").ScanResult): string {
+  const sections: string[] = [];
+  sections.push(`${COLOR.bold}fabrica-star · permission audit${COLOR.reset}`);
+  sections.push("");
+
+  if (result.servers.length === 0) {
+    sections.push("No MCP servers found.");
+    return sections.join("\n");
+  }
+
+  for (const server of result.servers) {
+    const icon = server.riskLevel === "info" ? "✔" : server.riskLevel === "medium" ? "⚠" : "✖";
+    sections.push(colorize(`${icon} Compromise of "${server.server}" could:`, server.riskLevel));
+
+    const perms = buildPermissions(server);
+    if (perms.length === 0) {
+      sections.push(`${COLOR.dim}   (no exploitable capabilities found)${COLOR.reset}`);
+    } else {
+      const maxCap = Math.max(...perms.map((p) => p.capability.length));
+      for (const p of perms) {
+        const pad = " ".repeat(maxCap - p.capability.length);
+        sections.push(`   ${colorize(p.capability + pad, p.severity)}  ${p.detail}`);
+      }
+    }
+    sections.push("");
+  }
+
+  return sections.join("\n");
+}

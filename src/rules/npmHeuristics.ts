@@ -73,10 +73,17 @@ function looksLikeTyposquat(pkg: string): string | null {
   return null;
 }
 
+/** Validates that a string looks like a real npm package name before using it in a URL */
+function isValidNpmPackageName(pkg: string): boolean {
+  // npm package names: lowercase, alphanumeric, hyphens, dots, underscores, scoped (@scope/name)
+  return /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/.test(pkg) && pkg.length <= 214;
+}
+
 async function fetchNpmMeta(pkg: string): Promise<NpmMeta | null> {
+  if (!isValidNpmPackageName(pkg)) return null; // refuse to build URLs from invalid names
   try {
     const encoded = pkg.startsWith("@") ? pkg.replace("/", "%2F") : pkg;
-    const res = await fetch(`${REGISTRY_URL}/${encoded}`, {
+    const res = await fetch(`${REGISTRY_URL}/${encoded}`, { // fabrica-star-ignore — host is a hardcoded constant
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;

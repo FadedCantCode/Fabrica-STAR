@@ -104,8 +104,8 @@ function shortDesc(ruleId: string): string {
     "npm-low-download-count": "MCP server package has very few downloads",
     "blast-radius-sensitive-files": "MCP server can reach sensitive files",
     "unparseable-config": "MCP config file could not be parsed",
-    "js-eval": "Source uses eval()",
-    "js-new-function": "Source uses new Function()",
+    "js-eval": "Source uses eval()", // fabrica-star-ignore
+    "js-new-function": "Source uses new Function()", // fabrica-star-ignore
     "js-exec-shell-string": "Source uses exec() with dynamic string",
     "js-spawn-shell-true": "Source uses spawn() with shell:true",
     "js-dynamic-fetch-url": "Source uses fetch() with interpolated URL",

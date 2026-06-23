@@ -58,6 +58,8 @@ export function scanSourceTree(rootDir: string): Finding[] {
 
     for (const pattern of applicablePatterns) {
       lines.forEach((line, idx) => {
+        // Allow inline suppression via: // fabrica-star-ignore
+        if (line.includes("fabrica-star-ignore")) return;
         if (pattern.regex.test(line)) {
           findings.push({
             ruleId: pattern.id,
