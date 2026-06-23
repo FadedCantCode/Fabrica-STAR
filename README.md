@@ -58,6 +58,8 @@ Every server in your config goes through all of these:
 | Blast radius | Sensitive files reachable from filesystem servers (SSH keys, AWS creds, .env) |
 | **Compound blast radius** | **Cross-server attack chains: filesystem + HTTP = complete exfiltration pipeline** |
 | **Tool pinning** | **Shasum rug pull detection — alerts if a package changes without a version bump** |
+| **Hook injection** | **Detects shell injection, network calls, and credential access in MCP hooks (all agents)** |
+| **Trust boundary flags** | **enableAllProjectMcpServers, dangerouslyAllowShell, wildcard trust flags** |
 
 No account required. Network checks (OSV, npm registry, provenance) are opt-out via `--offline`.
 
@@ -226,7 +228,7 @@ Official GitHub Action:
 
 ```yaml
 - name: Scan MCP servers
-  uses: FadedCantCode/Fabrica-STAR@v0.1.7
+  uses: FadedCantCode/Fabrica-STAR@v0.1.8
   with:
     config-path: .mcp.json
     fail-on: high
@@ -252,6 +254,26 @@ allow:
 
 Generate a starter file: `fabrica-star init`
 
+
+---
+
+## Visual report
+
+```bash
+fabrica-star scan --format html > report.html
+```
+
+Generates a self-contained HTML dashboard with a Fabrica design system:
+
+- **Security Score** — A–F grade with a 0–100 score
+- **Donut chart** — severity distribution
+- **Bar chart** — findings per server
+- **Score trend** — line chart of your score across past scans
+- **Compound risk chains** — cross-server attack paths
+- **Print to PDF** — one button, board-ready report
+
+All charts are pure inline SVG with zero external dependencies. The report is fully offline and contains no tracking.
+
 ---
 
 ## CLI reference
@@ -271,7 +293,7 @@ fabrica-star install-hook               Install a git pre-commit hook
 fabrica-star init                       Create a starter .fabrica-star.yml policy file
 
 Options (scan commands):
-  --format <format>     Output format: text, json, sarif, permissions (default: text)
+  --format <format>     Output format: text, json, sarif, permissions, html (default: text)
   --json                Shorthand for --format json
   --offline             Skip all network checks (OSV, npm registry, provenance, blocklist)
   --fail-on <severity>  Exit non-zero at or above this severity (default: high)
