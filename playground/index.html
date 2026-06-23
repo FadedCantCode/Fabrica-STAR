@@ -327,7 +327,7 @@ async function runScan(){
     // npm registry checks
     if(useNpm&&command&&RUNNERS.has(command)&&pkg&&!trustedScope(pkg.name)){
       try{
-        const encoded=pkg.name.startsWith('@')?pkg.name.replace('/','%2F'):pkg.name;
+        const encoded=pkg.name.startsWith('@')?'@'+encodeURIComponent(pkg.name.slice(1)):encodeURIComponent(pkg.name);
         const[metaRes,dlRes]=await Promise.allSettled([
           fetch(`https://registry.npmjs.org/${encoded}`,{signal:AbortSignal.timeout(4000)}),
           fetch(`https://api.npmjs.org/downloads/point/last-week/${encoded}`,{signal:AbortSignal.timeout(3000)})
