@@ -1,31 +1,26 @@
 export interface SourcePattern {
   id: string;
   severity: "low" | "medium" | "high" | "critical";
-  /** File extensions this pattern applies to (without the dot). Omit to apply to all scanned files. */
   extensions?: string[];
   regex: RegExp;
   message: string;
 }
 
-// Each pattern is intentionally a simple per-line regex, not a full AST
-// analysis. That keeps the tool dependency-free and fast, at the cost of
-// false positives on cleverly-written code. Findings are signals to review,
-// not proof of a vulnerability.
 export const SOURCE_PATTERNS: SourcePattern[] = [
-  // ── JavaScript / TypeScript dangerous code patterns ──────────────────────
+  // ── JavaScript / TypeScript ──────────────────────────────────────────────
   {
     id: "js-eval",
     severity: "high",
     extensions: ["js", "ts", "jsx", "tsx", "mjs", "cjs"],
     regex: /\beval\s*\(/, // fabrica-star-ignore
-    message: "eval() executes arbitrary strings as code. If any part of the input can reach this, it's a code-injection path.", // fabrica-star-ignore
+    message: "eval() executes arbitrary strings as code. If any part of the input can reach this, it is a code-injection path.",
   },
   {
     id: "js-new-function",
     severity: "high",
     extensions: ["js", "ts", "jsx", "tsx", "mjs", "cjs"],
     regex: /new\s+Function\s*\(/, // fabrica-star-ignore
-    message: "new Function() compiles a string into executable code, same risk class as eval().", // fabrica-star-ignore
+    message: "new Function() compiles a string into executable code, same risk class as eval().",
   },
   {
     id: "js-exec-shell-string",
@@ -46,10 +41,10 @@ export const SOURCE_PATTERNS: SourcePattern[] = [
     severity: "medium",
     extensions: ["js", "ts", "jsx", "tsx", "mjs", "cjs"],
     regex: /\bfetch\s*\(\s*[`][^`]*\$\{/,
-    message: "fetch() called with an interpolated URL. If any part of that URL is attacker- or model-controlled, this is a potential SSRF path — verify the value is constrained to an expected host.",
+    message: "fetch() called with an interpolated URL. If any part of that URL is attacker- or model-controlled, this is a potential SSRF path.",
   },
 
-  // ── Python dangerous patterns ─────────────────────────────────────────────
+  // ── Python ───────────────────────────────────────────────────────────────
   {
     id: "py-os-system",
     severity: "high",
@@ -74,13 +69,11 @@ export const SOURCE_PATTERNS: SourcePattern[] = [
   },
 
   // ── Prompt injection & tool poisoning ────────────────────────────────────
-  // These detect strings commonly found in malicious MCP server source code
-  // or tool descriptions that attempt to hijack LLM behavior.
   {
     id: "prompt-injection-ignore",
     severity: "critical",
-    regex: /ignore\s+(previous|all\s+previous|prior|earlier)\s+(instructions?|context|prompts?)/i,
-    message: "Possible prompt injection: 'ignore previous instructions' pattern detected. This is a classic injection string used to hijack LLM behavior.", // fabrica-star-ignore
+    regex: /ignore\s+(previous|all\s+previous|prior|earlier)\s+(instructions?|context|prompts?)/i, // fabrica-star-ignore
+    message: "Possible prompt injection: 'ignore previous instructions' pattern detected. This is a classic injection string used to hijack LLM behavior.",
   },
   {
     id: "prompt-injection-override",
@@ -92,7 +85,7 @@ export const SOURCE_PATTERNS: SourcePattern[] = [
     id: "tool-poisoning-must-call",
     severity: "high",
     regex: /you\s+(must|shall|have\s+to)\s+(always\s+)?(first\s+)?(call|invoke|use|run)\s+(this|the)/i,
-    message: "Possible tool poisoning: coercive 'you must call this' pattern in tool description or source. Malicious servers use this to force tool invocations.", // fabrica-star-ignore
+    message: "Possible tool poisoning: coercive 'you must call this' pattern in tool description or source. Malicious servers use this to force tool invocations.",
   },
   {
     id: "prompt-injection-system-delimiter",
@@ -101,9 +94,26 @@ export const SOURCE_PATTERNS: SourcePattern[] = [
     message: "Possible prompt injection: fake system prompt delimiter detected. Attackers use these to inject instructions into LLM context.",
   },
   {
-    id: "exfiltration-pattern", // fabrica-star-ignore
+    id: "exfiltration-pattern",
     severity: "critical",
+
     regex: /\b(exfiltrat|send\s+.{0,30}\s+to\s+remote|upload\s+.{0,30}\s+(secret|key|credential|token))/i, // fabrica-star-ignore
     message: "Possible data exfiltration pattern detected. Review carefully before running this server.", // fabrica-star-ignore
+  },
+
+  // ── Hook injection (all MCP agents) ──────────────────────────────────────
+  // Detects risky patterns in hook handler registrations across Claude Code,
+  // Cursor, VS Code, Windsurf, and generic MCP hook implementations.
+  {
+    id: "hook-wildcard-matcher",
+    severity: "medium",
+    regex: /matcher\s*:\s*["']\.\*["']|matcher\s*:\s*["']\*["']/,
+    message: "Hook registered with wildcard matcher ('.*' or '*') runs on every tool call, maximizing attack surface. Scope to specific tools.",
+  },
+  {
+    id: "hook-broad-permission",
+    severity: "medium",
+    regex: /(PreToolUse|PostToolUse|onToolCall|mcpHook|hookHandler)\s*[=:]/,
+    message: "MCP hook handler registration detected. Ensure no unsanitized tool output flows into exec() or subprocess calls within hook handlers (CVE-2025-59536 class RCE).",
   },
 ];
