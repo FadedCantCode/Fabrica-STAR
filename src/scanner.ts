@@ -1,12 +1,13 @@
 import type { Finding, ScanResult, ServerReport } from "./types.js";
 import { parseConfigFile } from "./configParser.js";
 import { runConfigRules } from "./rules/configRules.js";
+import { analyzeCompoundBlastRadius } from "./rules/compoundBlastRadius.js";
 import { rollUpSeverity } from "./scorer.js";
 
 /**
  * Scans a list of MCP client config files and returns a full report.
- * Network calls (remote known-bad list fetch, npm registry checks) run
- * concurrently across all servers to keep total latency low.
+ * Network calls run concurrently to keep latency low.
+ * After per-server analysis, runs cross-server compound blast radius analysis.
  */
 export async function scanConfigFiles(filePaths: string[]): Promise<ScanResult> {
   const servers: ServerReport[] = [];
@@ -26,7 +27,7 @@ export async function scanConfigFiles(filePaths: string[]): Promise<ScanResult> 
       continue;
     }
 
-    // Run all server checks concurrently within each config file
+    // Run all per-server checks concurrently
     const results = await Promise.all(
       entries.map(async (server) => {
         const findings = await runConfigRules(server);
@@ -39,6 +40,13 @@ export async function scanConfigFiles(filePaths: string[]): Promise<ScanResult> 
       })
     );
     servers.push(...results);
+
+    // Cross-server compound blast radius analysis
+    // Runs after all individual server results are available
+    const compoundFindings = analyzeCompoundBlastRadius(entries, results);
+    if (compoundFindings.length > 0) {
+      generalFindings.push(...compoundFindings);
+    }
   }
 
   return { servers, generalFindings };
