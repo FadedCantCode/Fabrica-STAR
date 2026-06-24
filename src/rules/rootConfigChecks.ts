@@ -62,12 +62,13 @@ function hookFindings(command: string, hookType: string, sourceFile: string): Fi
   return findings;
 }
 
-function extractHookCommands(obj: unknown, path: string): Array<{ command: string; path: string }> {
+function extractHookCommands(obj: unknown, path: string, depth = 0): Array<{ command: string; path: string }> {
+  if (depth > 50) return []; // defense in depth against pathological nesting
   if (typeof obj !== "object" || obj === null) return [];
   const results: Array<{ command: string; path: string }> = [];
 
   if (Array.isArray(obj)) {
-    obj.forEach((item, i) => results.push(...extractHookCommands(item, `${path}[${i}]`)));
+    obj.forEach((item, i) => results.push(...extractHookCommands(item, `${path}[${i}]`, depth + 1)));
     return results;
   }
 
@@ -91,7 +92,7 @@ function extractHookCommands(obj: unknown, path: string): Array<{ command: strin
   // Recurse into nested objects
   for (const [key, val] of Object.entries(record)) {
     if (key === "command" || key === "run" || key === "script") continue;
-    results.push(...extractHookCommands(val, `${path}.${key}`));
+    results.push(...extractHookCommands(val, `${path}.${key}`, depth + 1));
   }
 
   return results;
